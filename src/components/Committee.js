@@ -53,7 +53,7 @@ export default function Committee() {
       name: 'Mrs. Vetondaje Mbaeva',
       position: 'Additional Member',
       initials: 'VM',
-      image: '/images/vetondaje-mbaeva2.jpg',
+      image: '/images/vetondaje-mbaeva.jpg',
       description: 'Women Empowerment Led initiatives.'
     },
     {

@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   output: 'export',
-  basePath: '/bosele2',
-  assetPrefix: '/bosele2/',
+  basePath: process.env.NODE_ENV === 'production' ? '/bosele2' : '',
+  assetPrefix: process.env.NODE_ENV === 'production' ? '/bosele2/' : '',
   images: {
     unoptimized: true
   }
