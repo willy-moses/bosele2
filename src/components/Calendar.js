@@ -33,8 +33,7 @@ export default function Calendar() {
 
   const eventDays = upcomingEvents.map(e => new Date(e.date).getDate())
 
-  useEffect(() => { generateCalendar() }, [currentDate])
-
+ useEffect(() => {
   const generateCalendar = () => {
     const year = currentDate.getFullYear()
     const month = currentDate.getMonth()
@@ -57,6 +56,9 @@ export default function Calendar() {
 
     setCalendarDays(days)
   }
+
+  generateCalendar()
+}, [currentDate, eventDays])
 
   const changeMonth = (direction) => {
     const newDate = new Date(currentDate)
