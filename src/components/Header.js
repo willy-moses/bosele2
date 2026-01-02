@@ -64,7 +64,7 @@ const navigation = [
 ]
 
 const socialLinks = [
-  { name: 'Facebook', href: 'https://facebook.com/bosele.kgotla', icon: FacebookIcon, color: '#1877F2' },
+  { name: 'Facebook', href: 'https://web.facebook.com/profile.php?id=61584966610948&sk=about', icon: FacebookIcon, color: '#1877F2' },
   { name: 'WhatsApp', href: 'https://wa.me/26771234567', icon: WhatsAppIcon, color: '#25D366' },
   { name: 'Instagram', href: 'https://instagram.com/bosele_kgotla', icon: InstagramIcon, color: '#E4405F' },
   { name: 'Twitter', href: 'https://twitter.com/bosele_kgotla', icon: TwitterIcon, color: '#1DA1F2' },
