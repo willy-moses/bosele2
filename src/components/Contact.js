@@ -48,13 +48,13 @@ export default function Contact() {
     {
       icon: Phone,
       title: 'Phone',
-      content: ['+267 71 234 567', '+267 75 890 123', '(WhatsApp Available)'],
+      content: ['+267 74069451', '(WhatsApp Available)'],
       gradient: 'from-green-500 to-emerald-600'
     },
     {
       icon: Mail,
       title: 'Email',
-      content: ['info@boselekgotla.org', 'secretary@boselekgotla.org', 'projects@boselekgotla.org'],
+      content: ['boselevdc@gmail.com'],
       gradient: 'from-blue-500 to-indigo-600'
     },
     {
