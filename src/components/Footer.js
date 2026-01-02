@@ -2,8 +2,8 @@ import { MapPin, Phone, Mail, Facebook, MessageCircle, Instagram, Twitter, Youtu
 
 export default function Footer() {
   const socialLinks = [
-    { name: 'Facebook', href: 'https://facebook.com/bosele.kgotla', icon: Facebook, gradient: 'from-blue-500 to-blue-600' },
-    { name: 'WhatsApp', href: 'https://wa.me/26771234567', icon: MessageCircle, gradient: 'from-green-500 to-green-600' },
+    { name: 'Facebook', href: 'https://web.facebook.com/profile.php?id=61584966610948&sk=about', icon: Facebook, gradient: 'from-blue-500 to-blue-600' },
+    { name: 'WhatsApp', href: 'https://chat.whatsapp.com/GU1seuB79LZ0WPOdKsygDq', icon: MessageCircle, gradient: 'from-green-500 to-green-600' },
     { name: 'Instagram', href: 'https://instagram.com/bosele_kgotla', icon: Instagram, gradient: 'from-pink-500 to-pink-600' },
     { name: 'Twitter', href: 'https://twitter.com/bosele_kgotla', icon: Twitter, gradient: 'from-blue-400 to-blue-500' },
     { name: 'YouTube', href: 'https://youtube.com/@boselekgotla', icon: Youtube, gradient: 'from-red-500 to-red-600' }
@@ -38,11 +38,11 @@ export default function Footer() {
               </div>
               <div className="flex items-center gap-3">
                 <Phone className="w-4 h-4 text-green-200 flex-shrink-0" />
-                <p className="text-sm">+267 71 234 567</p>
+                <p className="text-sm">+267 74 069451</p>
               </div>
               <div className="flex items-center gap-3">
                 <Mail className="w-4 h-4 text-green-200 flex-shrink-0" />
-                <p className="text-sm">info@boselekgotla.org</p>
+                <p className="text-sm">boselevdc@gmail.com</p>
               </div>
             </div>
             
