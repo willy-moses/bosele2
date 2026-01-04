@@ -44,7 +44,7 @@ export default function Committee() {
   name: "Mrs. Kebashebile Mbinda Mangate",
   position: "Treasurer",
   initials: "KB",
-  image: "/images/kebashebile-mangate.jpg", // fixed here
+  image: "/images/kebashebile-mangate2.jpg", // fixed here
   description:
     "Financial management and budget oversight. Ensures transparent handling of committee funds and project finances."
 },
