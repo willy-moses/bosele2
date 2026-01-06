@@ -17,7 +17,7 @@ export default function Committee() {
         "Leading committee meetings and community initiatives. Experienced community leader with over 10 years of service."
     },
     {
-      name: "Mrs. Sandy Botshake",
+      name: "Miss. Sandy Botshake",
       position: "Vice Chairperson",
       initials: "SB",
       image: "/images/sandy-botshake.jpg",
@@ -58,11 +58,25 @@ export default function Committee() {
         "Social Entrepreneurship. Youth Community Mobiliser, Youth Led Advocate. Community engagement."
     },
     {
-      name: "Mrs. Vetondaje Mbaeva",
+      name: "Ms. Vetondaje Mbaeva",
       position: "Additional Member",
       initials: "VM",
       image: "/images/vetondaje-mbaeva.jpg",
       description: "Women Empowerment Led initiatives."
+    },
+    {
+      name: "Miss Dinah Molale",
+      position: "Additional Member",
+      initials: "DM",
+      image: "/images/dinah-molale.jpg",
+      description: "Molapo Wing Representation ."
+    },
+    {
+      name: "Miss Molapo Golekwang",
+      position: "Additional Member",
+      initials: "GM",
+      image: "/images/golekwang-molapong.jpg",
+      description: "Elderly Sapport."
     },
     {
       name: "Mrs. Doreen Ngakaemang",

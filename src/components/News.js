@@ -1,30 +1,42 @@
-import { Calendar, Users, Wrench, Clock } from 'lucide-react';
+import { Calendar, Users, Wrench, Clock, Droplets, Zap, Radio } from 'lucide-react';
 
 export default function News() {
   const newsItems = [
     {
       date: 'August 2025',
-      title: 'Community Water Project Update',
-      content: 'Progress continues on the new borehole project. Community members are requested to attend the next kgotla meeting for updates.',
+      title: 'Community Water Project Update - Ghanzi Blocks 1-6 Land Servicing',
+      content: 'Major infrastructure development is underway for Bosele, Morama, Kgapamadi South, Khurakhura, and Meriting areas. The comprehensive land servicing project, scheduled for completion in September 2026, includes construction of 36 km of bituminous roads with drainage systems, installation of 40 km of water reticulation network, implementation of a 43.8 km vacuum sewer system with wastewater treatment facility, and electrical, mechanical, and telecommunications civil works. Community members are requested to attend the next kgotla meeting for detailed updates on progress and timelines.',
       category: 'Infrastructure',
       icon: <Wrench className="w-5 h-5" />,
-      priority: 'high'
+      priority: 'high',
+      highlights: [
+        { icon: <Wrench className="w-4 h-4" />, text: '36 km roads & drainage' },
+        { icon: <Droplets className="w-4 h-4" />, text: '40 km water network' },
+        { icon: <Radio className="w-4 h-4" />, text: '43.8 km sewer system' },
+        { icon: <Zap className="w-4 h-4" />, text: 'Full utilities infrastructure' }
+      ]
     },
     {
       date: 'July 2025',
-      title: 'Youth Development Program Launch',
-      content: 'New skills training program for young people launched in partnership with local organizations. Registration now open.',
+      title: 'Bosele Youth Community Hub Opening',
+      content: 'Plans are underway to open the Bosele Youth Community Hub, a dedicated space for youth empowerment and development. The hub will provide a safe, secure, and conducive learning environment for young people. Key objectives include strengthening skills development and knowledge-sharing initiatives that promote innovation, creativity, and entrepreneurship; creating an inclusive platform for community rehabilitation where vulnerable youth can access resources and economic opportunities; enhancing collaboration with local institutions, government departments, and stakeholders in building a resilient youth community; and promoting cultural and artistic expression by providing spaces for young people to showcase their talents and preserve cultural heritage. Registration and participation details will be announced soon.',
       category: 'Community',
       icon: <Users className="w-5 h-5" />,
-      priority: 'medium'
+      priority: 'high',
+      highlights: [
+        { icon: <Users className="w-4 h-4" />, text: 'Safe learning environment' },
+        { icon: <Wrench className="w-4 h-4" />, text: 'Skills & entrepreneurship' },
+        { icon: <Calendar className="w-4 h-4" />, text: 'Resources & opportunities' },
+        { icon: <Users className="w-4 h-4" />, text: 'Cultural expression space' }
+      ]
     },
     {
       date: 'June 2025',
-      title: 'Road Maintenance Completed',
-      content: 'Thanks to community cooperation and government support, major road repairs have been completed in the village center.',
+      title: 'Road Capstone Installation Project',
+      content: 'A new project to install capstones (kerbs) along paved roads in Bosele is set to kick start soon. The capstones will be installed along road edges to improve drainage, road definition, and overall infrastructure quality. Community cooperation and support are appreciated as work commences.',
       category: 'Infrastructure',
       icon: <Wrench className="w-5 h-5" />,
-      priority: 'low'
+      priority: 'medium'
     }
   ];
 
@@ -87,7 +99,7 @@ export default function News() {
                       {item.icon}
                     </div>
                     <div>
-                      <div className="flex items-center gap-3 mb-2">
+                      <div className="flex items-center gap-3 mb-2 flex-wrap">
                         <span className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-semibold border ${getPriorityBadge(item.priority)}`}>
                           <Clock className="w-3 h-3" />
                           {item.date}
@@ -95,6 +107,11 @@ export default function News() {
                         <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
                           {item.category}
                         </span>
+                        {item.priority === 'high' && (
+                          <span className="inline-flex items-center px-3 py-1 rounded-full text-xs font-bold bg-blue-600 text-white">
+                            Target: Sep 2026
+                          </span>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -104,9 +121,23 @@ export default function News() {
                   {item.title}
                 </h3>
                 
-                <p className="text-gray-600 leading-relaxed text-lg">
+                <p className="text-gray-600 leading-relaxed text-lg mb-4">
                   {item.content}
                 </p>
+
+                {/* Project highlights for the main infrastructure project */}
+                {item.highlights && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 mt-6 p-4 bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl border border-blue-100">
+                    {item.highlights.map((highlight, idx) => (
+                      <div key={idx} className="flex items-center gap-2 text-sm text-gray-700">
+                        <div className="p-2 bg-white rounded-lg text-blue-600 shadow-sm">
+                          {highlight.icon}
+                        </div>
+                        <span className="font-medium">{highlight.text}</span>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 
                 {/* Read more button */}
                 <div className="mt-6 pt-4 border-t border-gray-100">

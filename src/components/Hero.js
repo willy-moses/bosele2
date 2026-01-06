@@ -2,7 +2,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
-import { ChevronLeft, ChevronRight, Play, Pause, ArrowDown } from 'lucide-react'
+import { ChevronLeft, ChevronRight, Play, Pause, ArrowDown, X, User, Mail, Phone, MapPin, Calendar } from 'lucide-react'
 
 const slides = [
   {
@@ -12,16 +12,28 @@ const slides = [
     description: 'Working together to build a stronger, more vibrant community in the heart of Gantsi District.',
     buttonText: 'Discover Our Mission',
     buttonLink: '#about',
-    gradient: 'from-emerald-900/80 via-green-800/70 to-teal-700/80'
+    gradient: 'from-emerald-900/80 via-green-800/70 to-teal-700/80',
+    isScrollLink: true
   },
   {
-    image: '/images/img1.jpg',
+    image: '/images/graduation.png',
+    title: 'Bosele Day Care Center',
+    subtitle: 'Early Learning • Safe Environment • Bright Futures',
+    description: 'Give your child the foundation they deserve. Quality early childhood education in a nurturing, caring environment.',
+    buttonText: 'Apply Now',
+    buttonLink: '#contact',
+    gradient: 'from-purple-900/80 via-pink-800/70 to-rose-700/80',
+    isApplyButton: true
+  },
+  {
+    image: '/images/youth.png',
     title: 'Empowering Our Youth',
     subtitle: 'Skills • Education • Opportunity',
     description: 'Providing comprehensive programs and meaningful opportunities for the next generation to thrive.',
     buttonText: 'Join Our Programs',
     buttonLink: '#activities',
-    gradient: 'from-blue-900/80 via-indigo-800/70 to-purple-700/80'
+    gradient: 'from-blue-900/80 via-indigo-800/70 to-purple-700/80',
+    isScrollLink: true
   },
   {
     image: '/images/img2.jpg',
@@ -30,7 +42,8 @@ const slides = [
     description: 'Keeping our rich traditions and cultural heritage alive through community events and education.',
     buttonText: 'Explore Our Culture',
     buttonLink: '#gallery',
-    gradient: 'from-orange-900/80 via-amber-800/70 to-yellow-700/80'
+    gradient: 'from-orange-900/80 via-amber-800/70 to-yellow-700/80',
+    isScrollLink: true
   }
 ]
 
@@ -38,6 +51,17 @@ export default function Hero() {
   const [currentSlide, setCurrentSlide] = useState(0)
   const [isAutoPlaying, setIsAutoPlaying] = useState(true)
   const [isLoaded, setIsLoaded] = useState(false)
+  const [showRegistrationForm, setShowRegistrationForm] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [formData, setFormData] = useState({
+    parentName: '',
+    childName: '',
+    email: '',
+    phone: '',
+    address: '',
+    childAge: '',
+    startDate: ''
+  })
 
   useEffect(() => {
     setIsLoaded(true)
@@ -67,6 +91,70 @@ export default function Hero() {
     setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length)
     setIsAutoPlaying(false)
     setTimeout(() => setIsAutoPlaying(true), 10000)
+  }
+
+  const handleInputChange = (e) => {
+    setFormData({
+      ...formData,
+      [e.target.name]: e.target.value
+    })
+  }
+
+  const handleSubmit = async () => {
+    // Basic validation
+    if (!formData.parentName || !formData.childName || !formData.email || !formData.phone || !formData.address || !formData.childAge || !formData.startDate) {
+      alert('Please fill in all required fields')
+      return
+    }
+    
+    setIsSubmitting(true)
+
+    try {
+      const response = await fetch('/api/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        alert('Application submitted successfully! We will contact you soon.')
+        setShowRegistrationForm(false)
+        setFormData({
+          parentName: '',
+          childName: '',
+          email: '',
+          phone: '',
+          address: '',
+          childAge: '',
+          startDate: ''
+        })
+      } else {
+        alert(data.error || 'Failed to submit application. Please try again.')
+      }
+    } catch (error) {
+      console.error('Submission error:', error)
+      alert('Failed to submit application. Please check your connection and try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
+  const handleButtonClick = (e, slide) => {
+    if (slide.isApplyButton) {
+      e.preventDefault()
+      setShowRegistrationForm(true)
+    } else if (slide.isScrollLink) {
+      e.preventDefault()
+      const targetId = slide.buttonLink.replace('#', '')
+      const targetElement = document.getElementById(targetId)
+      if (targetElement) {
+        targetElement.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      }
+    }
   }
 
   return (
@@ -156,16 +244,202 @@ export default function Hero() {
           </p>
 
           <div className="transform transition-all duration-700 delay-700">
-            <Link
-              href={slides[currentSlide].buttonLink}
+            <button
+              onClick={(e) => handleButtonClick(e, slides[currentSlide])}
               className="group inline-flex items-center px-8 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-2xl shadow-2xl hover:shadow-orange-500/25 hover:from-orange-400 hover:to-red-400 hover:scale-105 hover:-translate-y-1 transition-all duration-300 text-lg"
             >
               {slides[currentSlide].buttonText}
               <ChevronRight className="ml-2 w-5 h-5 group-hover:translate-x-1 transition-transform duration-300" />
-            </Link>
+            </button>
           </div>
         </div>
       </div>
+
+      {/* Registration Form Modal */}
+      {showRegistrationForm && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowRegistrationForm(false)}>
+          <div className="bg-white rounded-2xl shadow-2xl max-w-2xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
+            {/* Modal Header */}
+            <div className="bg-gradient-to-r from-purple-500 to-pink-600 p-6 text-white relative">
+              <button 
+                onClick={() => setShowRegistrationForm(false)}
+                className="absolute top-4 right-4 hover:bg-white hover:bg-opacity-20 rounded-full p-2 transition-all duration-300"
+              >
+                <X className="w-6 h-6" />
+              </button>
+              <div className="flex items-center gap-3">
+                <User className="w-8 h-8" />
+                <h3 className="text-2xl font-bold">Day Care Center Registration</h3>
+              </div>
+            </div>
+
+            {/* Modal Content */}
+            <div className="p-8">
+              <p className="text-gray-600 mb-6 leading-relaxed">
+                Please fill out this form to register your child at Bosele Day Care Center. We will contact you soon to confirm your application.
+              </p>
+
+              <div className="space-y-4">
+                {/* Parent Name */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Parent/Guardian Name *
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      name="parentName"
+                      value={formData.parentName}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                      placeholder="Enter your full name"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                </div>
+
+                {/* Child Name */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Child&apos;s Name *
+                  </label>
+                  <div className="relative">
+                    <User className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="text"
+                      name="childName"
+                      value={formData.childName}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                      placeholder="Enter child's full name"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                </div>
+
+                {/* Email */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Email Address *
+                  </label>
+                  <div className="relative">
+                    <Mail className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="email"
+                      name="email"
+                      value={formData.email}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                      placeholder="your.email@example.com"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                </div>
+
+                {/* Phone */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Phone Number *
+                  </label>
+                  <div className="relative">
+                    <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="tel"
+                      name="phone"
+                      value={formData.phone}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                      placeholder="+267 XX XXX XXX"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                </div>
+
+                {/* Address */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Residential Address *
+                  </label>
+                  <div className="relative">
+                    <MapPin className="absolute left-3 top-3 w-5 h-5 text-gray-400" />
+                    <textarea
+                      name="address"
+                      value={formData.address}
+                      onChange={handleInputChange}
+                      rows="3"
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                      placeholder="Enter your full address"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                </div>
+
+                {/* Child Age */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Child&apos;s Age *
+                  </label>
+                  <input
+                    type="number"
+                    name="childAge"
+                    value={formData.childAge}
+                    onChange={handleInputChange}
+                    min="0"
+                    max="10"
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                    placeholder="Enter child's age"
+                    disabled={isSubmitting}
+                  />
+                </div>
+
+                {/* Start Date */}
+                <div>
+                  <label className="block text-sm font-semibold text-gray-700 mb-2">
+                    Preferred Start Date *
+                  </label>
+                  <div className="relative">
+                    <Calendar className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 text-gray-400" />
+                    <input
+                      type="date"
+                      name="startDate"
+                      value={formData.startDate}
+                      onChange={handleInputChange}
+                      className="w-full pl-10 pr-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all duration-300"
+                      disabled={isSubmitting}
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* Footer Note */}
+              <div className="mt-6 p-4 bg-purple-50 rounded-lg border-l-4 border-purple-500">
+                <p className="text-sm text-gray-700 leading-relaxed">
+                  <strong>Note:</strong> This is a preliminary registration form. Our team will contact you within 2-3 business days to complete the enrollment process.
+                </p>
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="mt-6 flex gap-4">
+                <button 
+                  onClick={() => setShowRegistrationForm(false)}
+                  className="flex-1 border-2 border-purple-500 text-purple-600 px-6 py-3 rounded-lg font-semibold hover:bg-purple-500 hover:text-white transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed"
+                  disabled={isSubmitting}
+                >
+                  Cancel
+                </button>
+                <button 
+                  onClick={handleSubmit}
+                  className="flex-1 bg-gradient-to-r from-purple-500 to-pink-600 text-white px-6 py-3 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 transform hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100"
+                  disabled={isSubmitting}
+                >
+                  {isSubmitting ? 'Submitting...' : 'Submit Application'}
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Slide Indicators */}
       <div className="absolute bottom-8 left-1/2 transform -translate-x-1/2 z-30">

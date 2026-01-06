@@ -1,6 +1,6 @@
 'use client'
 import { useState } from 'react'
-import { MapPin, Phone, Mail, Clock, Building, Scale, Send, CheckCircle } from 'lucide-react'
+import { MapPin, Phone, Mail, Clock, Building, Scale, Send, CheckCircle, AlertCircle } from 'lucide-react'
 
 export default function Contact() {
   const [formData, setFormData] = useState({
@@ -12,6 +12,8 @@ export default function Contact() {
     message: ''
   })
   const [isSubmitted, setIsSubmitted] = useState(false)
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState('')
 
   const handleInputChange = (e) => {
     setFormData({
@@ -20,22 +22,52 @@ export default function Contact() {
     })
   }
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
-    console.log('Form submitted:', formData)
-    setIsSubmitted(true)
-    setFormData({
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      subject: '',
-      message: ''
-    })
     
-    setTimeout(() => {
-      setIsSubmitted(false)
-    }, 5000)
+    // Basic validation
+    if (!formData.firstName || !formData.lastName || !formData.email || !formData.subject || !formData.message) {
+      setError('Please fill in all required fields')
+      return
+    }
+    
+    setIsSubmitting(true)
+    setError('')
+
+    try {
+      const response = await fetch('/api/contact', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      })
+
+      const data = await response.json()
+
+      if (response.ok) {
+        setIsSubmitted(true)
+        setFormData({
+          firstName: '',
+          lastName: '',
+          email: '',
+          phone: '',
+          subject: '',
+          message: ''
+        })
+        
+        setTimeout(() => {
+          setIsSubmitted(false)
+        }, 5000)
+      } else {
+        setError(data.error || 'Failed to send message. Please try again or contact us directly.')
+      }
+    } catch (err) {
+      console.error('Error submitting form:', err)
+      setError('Failed to send message. Please check your connection and try again.')
+    } finally {
+      setIsSubmitting(false)
+    }
   }
 
   const contactItems = [
@@ -66,7 +98,7 @@ export default function Contact() {
     {
       icon: Building,
       title: 'Office Hours',
-      content: ['Monday - Friday', '8:00 AM - 5:00 PM', 'Saturday: 8:00 AM - 12:00 PM'],
+      content: ['Monday - Friday', '8:00 AM - 5:00 PM'],
       gradient: 'from-orange-500 to-amber-600'
     },
     {
@@ -130,6 +162,13 @@ export default function Contact() {
                 <span className="font-medium">
                   Your message has been sent successfully! We will get back to you soon.
                 </span>
+              </div>
+            )}
+
+            {error && (
+              <div className="bg-gradient-to-r from-red-100 to-rose-100 border border-red-300 text-red-800 px-6 py-4 rounded-xl mb-8 flex items-center gap-3">
+                <AlertCircle className="w-6 h-6 text-red-600" />
+                <span className="font-medium">{error}</span>
               </div>
             )}
             
@@ -245,10 +284,20 @@ export default function Contact() {
 
               <button
                 onClick={handleSubmit}
-                className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-4 px-6 rounded-lg text-lg font-semibold hover:from-emerald-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center gap-2"
+                disabled={isSubmitting}
+                className="w-full bg-gradient-to-r from-emerald-500 to-green-600 text-white py-4 px-6 rounded-lg text-lg font-semibold hover:from-emerald-600 hover:to-green-700 transition-all duration-300 transform hover:scale-105 shadow-lg flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
               >
-                <Send className="w-5 h-5" />
-                Send Message
+                {isSubmitting ? (
+                  <>
+                    <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    Sending...
+                  </>
+                ) : (
+                  <>
+                    <Send className="w-5 h-5" />
+                    Send Message
+                  </>
+                )}
               </button>
             </div>
           </div>

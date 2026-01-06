@@ -28,24 +28,24 @@ export default function Gallery() {
       title: 'Community Garden',
       description: 'Fresh vegetables for all'
     },
+   {
+  src: '/images/dropout.jpg',
+  alt: 'Street Children Rescue Education',
+  title: 'Hope Restored',
+  description: 'Reaching forgotten children who never had the chance to go to school'
+},
     {
-      src: '/images/dropout.jpg',
-      alt: 'Community Garden',
-      title: 'Community Garden',
-      description: 'Fresh vegetables for all'
-    },
+  src: '/images/culture1.jpg',
+  alt: 'Bosele Cultural Village',
+  title: 'Bosele Kgotla Heritage',
+  description: 'Preserving traditional Setswana culture and architecture'
+},
     {
-      src: '/images/culture1.jpg',
-      alt: 'Community Garden',
-      title: 'Community Garden',
-      description: 'Fresh vegetables for all'
-    },
-    {
-      src: '/images/culture2.jpg',
-      alt: 'Community Garden',
-      title: 'Community Garden',
-      description: 'Fresh vegetables for all'
-    },
+  src: '/images/culture2.jpg',
+  alt: 'Traditional Setswana Architecture',
+  title: 'Living History',
+  description: 'Experience authentic traditional life with community guides at Bosele'
+}
   ]
 
   return (
