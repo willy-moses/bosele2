@@ -6,45 +6,45 @@ import { ChevronLeft, ChevronRight, Play, Pause, ArrowDown, X, User, Mail, Phone
 
 const slides = [
   {
-    image: '/images/backimg.jpg',
+    image: '/images/kgt.jpg',
     title: 'Welcome to Bosele Kgotla',
     subtitle: 'Unity • Progress • Community',
     description: 'Working together to build a stronger, more vibrant community in the heart of Gantsi District.',
     buttonText: 'Discover Our Mission',
     buttonLink: '#about',
-    gradient: 'from-emerald-900/80 via-green-800/70 to-teal-700/80',
+    gradient: 'from-emerald-900/60 via-green-800/50 to-teal-700/60',
     isScrollLink: true
   },
   {
-    image: '/images/graduation.png',
+    image: '/images/pre.png',
     title: 'Bosele Day Care Center',
     subtitle: 'Early Learning • Safe Environment • Bright Futures',
     description: 'Give your child the foundation they deserve. Quality early childhood education in a nurturing, caring environment.',
     buttonText: 'Apply Now',
     buttonLink: '#contact',
-    gradient: 'from-purple-900/80 via-pink-800/70 to-rose-700/80',
+    gradient: 'from-purple-900/60 via-pink-800/50 to-rose-700/60',
     isApplyButton: true
   },
   {
-    image: '/images/youth.png',
-    title: 'Empowering Our Youth',
-    subtitle: 'Skills • Education • Opportunity',
-    description: 'Providing comprehensive programs and meaningful opportunities for the next generation to thrive.',
-    buttonText: 'Join Our Programs',
-    buttonLink: '#activities',
-    gradient: 'from-blue-900/80 via-indigo-800/70 to-purple-700/80',
+    image: '/images/caravan.png',
+    title: 'Help Revive Our Youth Center',
+    subtitle: 'Renovation • Partnership • Investment',
+    description: 'Our youth center needs your support! We are seeking donations and partnerships to refurbish this vital community space for the next generation.',
+    buttonText: 'Support Our Youth',
+    buttonLink: '#contact',
+    gradient: 'from-slate-900/65 via-blue-900/55 to-indigo-800/65',
     isScrollLink: true
   },
   {
-    image: '/images/img2.jpg',
-    title: 'Preserving Our Heritage',
-    subtitle: 'Culture • Tradition • Legacy',
-    description: 'Keeping our rich traditions and cultural heritage alive through community events and education.',
-    buttonText: 'Explore Our Culture',
-    buttonLink: '#gallery',
-    gradient: 'from-orange-900/80 via-amber-800/70 to-yellow-700/80',
+    image: '/images/garden.jpg',
+    title: 'Growing Together at Bosele',
+    subtitle: 'Agriculture • Education • Community',
+    description: 'Our VDC community garden teaches sustainable farming practices while providing fresh, healthy produce. Join us in cultivating a greener, more self-sufficient future.',
+    buttonText: 'Explore Our Garden',
+    buttonLink: '#activities',
+    gradient: 'from-green-900/60 via-teal-800/50 to-cyan-700/60',
     isScrollLink: true
-  }
+  },
 ]
 
 export default function Hero() {
@@ -177,7 +177,10 @@ export default function Hero() {
             }}
             priority={index === 0}
           />
+          {/* Lighter overlay with better visibility */}
           <div className={`absolute inset-0 bg-gradient-to-br ${slide.gradient}`} />
+          {/* Subtle vignette effect for text readability */}
+          <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
         </div>
       ))}
 
@@ -228,18 +231,18 @@ export default function Hero() {
           }`}
         >
           <div className="mb-4">
-            <span className="inline-flex items-center px-4 py-2 bg-white/10 backdrop-blur-md rounded-full border border-white/20 text-sm font-medium tracking-wide">
+            <span className="inline-flex items-center px-4 py-2 bg-white/15 backdrop-blur-md rounded-full border border-white/30 text-sm font-medium tracking-wide shadow-lg">
               {slides[currentSlide].subtitle}
             </span>
           </div>
 
-          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight">
+          <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight drop-shadow-2xl">
             <span className="block transform transition-all duration-700 delay-300">
               {slides[currentSlide].title}
             </span>
           </h1>
 
-          <p className="text-lg md:text-xl lg:text-2xl mb-8 leading-relaxed max-w-3xl mx-auto opacity-90 transform transition-all duration-700 delay-500">
+          <p className="text-lg md:text-xl lg:text-2xl mb-8 leading-relaxed max-w-3xl mx-auto drop-shadow-lg transform transition-all duration-700 delay-500">
             {slides[currentSlide].description}
           </p>
 
