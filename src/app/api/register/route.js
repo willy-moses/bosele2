@@ -1,15 +1,12 @@
-// src/app/api/register/route.js
-
 import { NextResponse } from 'next/server'
-import { db } from '../../../lib/firebase'
-import { collection, addDoc, serverTimestamp } from 'firebase/firestore'
+import { adminDb } from '@/lib/firebase-admin'
 
 export async function POST(request) {
   try {
     const body = await request.json()
-    
+
     const { parentName, childName, email, phone, address, childAge, startDate } = body
-    
+
     if (!parentName || !childName || !email || !phone || !address || !childAge || !startDate) {
       return NextResponse.json(
         { error: 'All fields are required' },
@@ -17,31 +14,27 @@ export async function POST(request) {
       )
     }
 
-    const docRef = await addDoc(collection(db, 'registrations'), {
+    const docRef = await adminDb.collection('registrations').add({
       parentName,
       childName,
       email,
       phone,
       address,
-      childAge: parseInt(childAge),
+      childAge: Number(childAge),
       startDate,
-      createdAt: serverTimestamp(),
-      status: 'pending'
+      createdAt: new Date(),
+      status: 'pending',
     })
 
     return NextResponse.json(
-      { 
-        success: true, 
-        message: 'Registration submitted successfully',
-        id: docRef.id 
-      },
+      { success: true, id: docRef.id },
       { status: 201 }
     )
 
   } catch (error) {
     console.error('Registration error:', error)
     return NextResponse.json(
-      { error: 'Failed to submit registration: ' + error.message },
+      { error: 'Failed to submit registration' },
       { status: 500 }
     )
   }
