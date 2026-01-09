@@ -1,7 +1,7 @@
 // src/app/api/contact/route.js
 
 import { NextResponse } from 'next/server'
-import { adminDb } from '@/lib/firebase-admin'
+import { adminDb } from '../../../lib/firebase-admin.js'
 
 export async function POST(request) {
   try {
@@ -9,6 +9,7 @@ export async function POST(request) {
 
     const { firstName, lastName, email, phone, subject, message } = body
 
+    // Validate required fields
     if (!firstName || !lastName || !email || !subject || !message) {
       return NextResponse.json(
         { error: 'All required fields must be filled' },
@@ -16,6 +17,16 @@ export async function POST(request) {
       )
     }
 
+    // Basic email validation
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    if (!emailRegex.test(email)) {
+      return NextResponse.json(
+        { error: 'Invalid email format' },
+        { status: 400 }
+      )
+    }
+
+    // Save to Firestore
     const docRef = await adminDb.collection('contact-messages').add({
       firstName,
       lastName,
@@ -28,7 +39,7 @@ export async function POST(request) {
     })
 
     return NextResponse.json(
-      { success: true, id: docRef.id },
+      { success: true, id: docRef.id, message: 'Message sent successfully' },
       { status: 201 }
     )
 
