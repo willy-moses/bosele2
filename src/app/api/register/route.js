@@ -3,10 +3,28 @@ import { adminDb } from '../../../lib/firebase-admin.js'
 
 export async function POST(request) {
   try {
-    const body = await request.json()
+    // Handle empty body during build
+    let body
+    try {
+      const text = await request.text()
+      if (!text || text.trim() === '') {
+        return NextResponse.json(
+          { error: 'Request body is empty' },
+          { status: 400 }
+        )
+      }
+      body = JSON.parse(text)
+    } catch (parseError) {
+      console.error('JSON parse error:', parseError)
+      return NextResponse.json(
+        { error: 'Invalid request format' },
+        { status: 400 }
+      )
+    }
 
     const { parentName, childName, email, phone, address, childAge, startDate } = body
 
+    // Validate all required fields
     if (!parentName || !childName || !email || !phone || !address || !childAge || !startDate) {
       return NextResponse.json(
         { error: 'All fields are required' },
@@ -14,6 +32,7 @@ export async function POST(request) {
       )
     }
 
+    // Save to Firestore
     const docRef = await adminDb.collection('registrations').add({
       parentName,
       childName,
@@ -38,4 +57,9 @@ export async function POST(request) {
       { status: 500 }
     )
   }
+}
+
+// Add OPTIONS handler for CORS
+export async function OPTIONS() {
+  return NextResponse.json({}, { status: 200 })
 }
