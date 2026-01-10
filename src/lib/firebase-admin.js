@@ -1,64 +1,68 @@
 import admin from "firebase-admin"
 
-// Validate environment variables
-const validateEnvVars = () => {
-  const required = {
-    projectId: process.env.FIREBASE_PROJECT_ID,
-    clientEmail: process.env.FIREBASE_CLIENT_EMAIL,
-    privateKey: process.env.FIREBASE_PRIVATE_KEY,
+let isInitialized = false
+
+// Lazy initialization - only runs when actually needed
+function initializeFirebaseAdmin() {
+  if (isInitialized) {
+    return
   }
 
-  const missing = Object.entries(required)
-    .filter(([_, value]) => !value)
-    .map(([key]) => key)
+  // Skip initialization during build time
+  if (process.env.NEXT_PHASE === 'phase-production-build') {
+    console.log('⏭️  Skipping Firebase Admin init during build')
+    return
+  }
 
-  if (missing.length > 0) {
+  const projectId = process.env.FIREBASE_PROJECT_ID
+  const clientEmail = process.env.FIREBASE_CLIENT_EMAIL
+  const privateKey = process.env.FIREBASE_PRIVATE_KEY
+
+  if (!projectId || !clientEmail || !privateKey) {
+    console.error('❌ Missing Firebase Admin environment variables')
     throw new Error(
-      `Missing Firebase Admin environment variables: ${missing.join(", ")}\n` +
-      `Please check your .env.local file contains:\n` +
-      `- FIREBASE_PROJECT_ID\n` +
-      `- FIREBASE_CLIENT_EMAIL\n` +
-      `- FIREBASE_PRIVATE_KEY`
+      `Missing Firebase Admin environment variables: ${!projectId ? 'projectId ' : ''}${!clientEmail ? 'clientEmail ' : ''}${!privateKey ? 'privateKey' : ''}`
     )
   }
 
-  return required
-}
-
-// Initialize Firebase Admin
-if (!admin.apps.length) {
   try {
-    const { projectId, clientEmail, privateKey } = validateEnvVars()
-
-    // Clean up the private key
     const formattedPrivateKey = privateKey.replace(/\\n/g, "\n")
 
-    // Verify the private key format
     if (!formattedPrivateKey.includes("BEGIN PRIVATE KEY")) {
-      throw new Error(
-        "FIREBASE_PRIVATE_KEY appears to be malformed. " +
-        "Ensure it includes the full key with BEGIN/END markers."
-      )
+      throw new Error("FIREBASE_PRIVATE_KEY appears to be malformed")
     }
 
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId,
-        clientEmail,
-        privateKey: formattedPrivateKey,
-      }),
-    })
+    if (!admin.apps.length) {
+      admin.initializeApp({
+        credential: admin.credential.cert({
+          projectId,
+          clientEmail,
+          privateKey: formattedPrivateKey,
+        }),
+      })
+      console.log("✅ Firebase Admin initialized successfully")
+    }
 
-    console.log("✅ Firebase Admin initialized successfully")
+    isInitialized = true
   } catch (error) {
-    console.error("❌ Firebase Admin initialization failed:")
-    console.error(error.message)
+    console.error("❌ Firebase Admin initialization failed:", error.message)
     throw error
   }
 }
 
-export const adminDb = admin.firestore()
-export const adminAuth = admin.auth()
+// Proxy to ensure initialization happens before use
+export const adminDb = new Proxy({}, {
+  get(target, prop) {
+    initializeFirebaseAdmin()
+    return admin.firestore()[prop]
+  }
+})
 
-// Optional: Export the admin instance for other services
+export const adminAuth = new Proxy({}, {
+  get(target, prop) {
+    initializeFirebaseAdmin()
+    return admin.auth()[prop]
+  }
+})
+
 export default admin
