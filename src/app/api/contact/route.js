@@ -1,8 +1,5 @@
-// src/app/api/contact/route.js
-export const dynamic = 'force-dynamic'
-export const runtime = 'nodejs'
 import { NextResponse } from 'next/server'
-import { adminDb } from '../../../lib/firebase-admin.js'
+import { supabase } from '../../../lib/supabase.js'
 
 export async function POST(request) {
   try {
@@ -10,7 +7,6 @@ export async function POST(request) {
 
     const { firstName, lastName, email, phone, subject, message } = body
 
-    // Validate required fields
     if (!firstName || !lastName || !email || !subject || !message) {
       return NextResponse.json(
         { error: 'All required fields must be filled' },
@@ -27,20 +23,32 @@ export async function POST(request) {
       )
     }
 
-    // Save to Firestore
-    const docRef = await adminDb.collection('contact-messages').add({
-      firstName,
-      lastName,
-      email,
-      phone: phone || '',
-      subject,
-      message,
-      createdAt: new Date(),
-      status: 'unread',
-    })
+    // Insert into Supabase
+    const { data, error } = await supabase
+      .from('contact_messages')
+      .insert([
+        {
+          first_name: firstName,
+          last_name: lastName,
+          email,
+          phone: phone || '',
+          subject,
+          message,
+          status: 'unread',
+        }
+      ])
+      .select()
+
+    if (error) {
+      console.error('Supabase error:', error)
+      return NextResponse.json(
+        { error: 'Failed to send message' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json(
-      { success: true, id: docRef.id, message: 'Message sent successfully' },
+      { success: true, id: data[0].id, message: 'Message sent successfully' },
       { status: 201 }
     )
 
