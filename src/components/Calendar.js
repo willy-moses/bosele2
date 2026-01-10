@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useMemo } from 'react'
 
 // Simple SVG chevron components
 const ChevronLeft = ({ className }) => (
@@ -31,34 +31,38 @@ export default function Calendar() {
     { date: 'August 22, 2025', event: 'Health Screening Day - 9:00 AM' }
   ]
 
-  const eventDays = upcomingEvents.map(e => new Date(e.date).getDate())
+  // Use useMemo to memoize eventDays so it doesn't change on every render
+  const eventDays = useMemo(() => 
+    upcomingEvents.map(e => new Date(e.date).getDate()),
+    [] // Empty dependency array since upcomingEvents is static
+  )
 
- useEffect(() => {
-  const generateCalendar = () => {
-    const year = currentDate.getFullYear()
-    const month = currentDate.getMonth()
-    const firstDay = new Date(year, month, 1)
-    const lastDay = new Date(year, month + 1, 0)
-    const daysInMonth = lastDay.getDate()
-    const startingDayOfWeek = firstDay.getDay()
+  useEffect(() => {
+    const generateCalendar = () => {
+      const year = currentDate.getFullYear()
+      const month = currentDate.getMonth()
+      const firstDay = new Date(year, month, 1)
+      const lastDay = new Date(year, month + 1, 0)
+      const daysInMonth = lastDay.getDate()
+      const startingDayOfWeek = firstDay.getDay()
 
-    const days = []
+      const days = []
 
-    // Empty cells before the first day
-    for (let i = 0; i < startingDayOfWeek; i++) days.push({ day: '', isEmpty: true })
+      // Empty cells before the first day
+      for (let i = 0; i < startingDayOfWeek; i++) days.push({ day: '', isEmpty: true })
 
-    const today = new Date()
-    for (let day = 1; day <= daysInMonth; day++) {
-      const isToday = year === today.getFullYear() && month === today.getMonth() && day === today.getDate()
-      const hasEvent = eventDays.includes(day)
-      days.push({ day, isEmpty: false, isToday, hasEvent })
+      const today = new Date()
+      for (let day = 1; day <= daysInMonth; day++) {
+        const isToday = year === today.getFullYear() && month === today.getMonth() && day === today.getDate()
+        const hasEvent = eventDays.includes(day)
+        days.push({ day, isEmpty: false, isToday, hasEvent })
+      }
+
+      setCalendarDays(days)
     }
 
-    setCalendarDays(days)
-  }
-
-  generateCalendar()
-}, [currentDate, eventDays])
+    generateCalendar()
+  }, [currentDate, eventDays])
 
   const changeMonth = (direction) => {
     const newDate = new Date(currentDate)
