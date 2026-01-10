@@ -1,5 +1,6 @@
 // src/app/api/contact/route.js
-
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 import { NextResponse } from 'next/server'
 import { adminDb } from '../../../lib/firebase-admin.js'
 

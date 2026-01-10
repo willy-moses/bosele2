@@ -1,6 +1,8 @@
+export const dynamic = 'force-dynamic'
+export const runtime = 'nodejs'
 import { NextResponse } from 'next/server'
 import { adminDb } from '../../../lib/firebase-admin.js'
-
+s
 export async function POST(req) {
   try {
     const data = await req.json()
