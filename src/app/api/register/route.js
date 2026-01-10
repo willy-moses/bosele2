@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '../../../lib/supabase.js'
+import { supabaseServer } from '../../../lib/supabase-server.js'
 
 export async function POST(request) {
   try {
@@ -14,8 +14,8 @@ export async function POST(request) {
       )
     }
 
-    // Insert into Supabase
-    const { data, error } = await supabase
+    // Insert into Supabase using server client (bypasses RLS)
+    const { data, error } = await supabaseServer
       .from('registrations')
       .insert([
         {
