@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { supabaseServer } from '../../../lib/supabase-server.js'
+import { sql } from '@vercel/postgres'
 
 export async function POST(request) {
   try {
@@ -14,33 +14,14 @@ export async function POST(request) {
       )
     }
 
-    // Insert into Supabase using server client (bypasses RLS)
-    const { data, error } = await supabaseServer
-      .from('registrations')
-      .insert([
-        {
-          parent_name: parentName,
-          child_name: childName,
-          email,
-          phone,
-          address,
-          child_age: Number(childAge),
-          start_date: startDate,
-          status: 'pending',
-        }
-      ])
-      .select()
-
-    if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json(
-        { error: 'Failed to submit registration' },
-        { status: 500 }
-      )
-    }
+    const result = await sql`
+      INSERT INTO registrations (parent_name, child_name, email, phone, address, child_age, start_date, status)
+      VALUES (${parentName}, ${childName}, ${email}, ${phone}, ${address}, ${Number(childAge)}, ${startDate}, 'pending')
+      RETURNING id
+    `
 
     return NextResponse.json(
-      { success: true, id: data[0].id },
+      { success: true, id: result.rows[0].id },
       { status: 201 }
     )
 

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { supabase } from '../../../lib/supabase.js'
+import { sql } from '@vercel/postgres'
 
 export async function POST(request) {
   try {
@@ -23,32 +23,14 @@ export async function POST(request) {
       )
     }
 
-    // Insert into Supabase
-    const { data, error } = await supabase
-      .from('contact_messages')
-      .insert([
-        {
-          first_name: firstName,
-          last_name: lastName,
-          email,
-          phone: phone || '',
-          subject,
-          message,
-          status: 'unread',
-        }
-      ])
-      .select()
-
-    if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json(
-        { error: 'Failed to send message' },
-        { status: 500 }
-      )
-    }
+    const result = await sql`
+      INSERT INTO contact_messages (first_name, last_name, email, phone, subject, message, status)
+      VALUES (${firstName}, ${lastName}, ${email}, ${phone || ''}, ${subject}, ${message}, 'unread')
+      RETURNING id
+    `
 
     return NextResponse.json(
-      { success: true, id: data[0].id, message: 'Message sent successfully' },
+      { success: true, id: result.rows[0].id, message: 'Message sent successfully' },
       { status: 201 }
     )
 
