@@ -1,4 +1,7 @@
 // src/app/sitemap.js
+export const dynamic = 'force-static'
+export const revalidate = false
+
 export default function sitemap() {
   const baseUrl = 'https://boselevdc.co.bw'
   
