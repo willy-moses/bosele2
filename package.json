@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "dev": "next dev --turbopack",
-    "build": "next build",
-    "start": "next start",
-    "lint": "next lint"
+  "dev": "next dev --turbopack",
+  "build": "next build",
+  "start": "next start",
+  "lint": "next lint",
+  "export": "next export"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
@@ -20,7 +21,8 @@
     "next": "15.4.10",
     "react": "19.1.0",
     "react-dom": "19.1.0",
-    "resend": "^6.4.2"
+    "resend": "^6.4.2",
+    "sharp": "^0.34.5"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",

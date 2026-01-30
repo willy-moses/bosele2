@@ -1,18 +1,17 @@
-"use client"
+'use client'
 
 import { useState } from "react"
 import Image from "next/image"
 
 export default function Committee() {
   const [imageErrors, setImageErrors] = useState({})
-  const [imageLoading, setImageLoading] = useState({})
 
   const members = [
     {
       name: "Mr. Komberes Monyatse",
       position: "Chairperson",
       initials: "KM",
-      image: "/images/komberes-monyatse.jpg",
+      image: "/images/komberes-monyatse.webp",
       description:
         "Leading committee meetings and community initiatives. Experienced community leader with over 10 years of service."
     },
@@ -20,7 +19,7 @@ export default function Committee() {
       name: "Miss. Sandy Botshake",
       position: "Vice Chairperson",
       initials: "SB",
-      image: "/images/sandy-botshake.jpg",
+      image: "/images/sandy-botshake.webp",
       description:
         "Supporting leadership and project coordination. Active in women's development programs and youth mentorship."
     },
@@ -28,32 +27,31 @@ export default function Committee() {
       name: "Mrs. Violet Onny Kaome",
       position: "Secretary",
       initials: "VK",
-      image: "/images/violet-kaome.jpg",
+      image: "/images/violet-kaome.webp",
       description:
         "Managing records and correspondence. Handles all committee documentation and communication with government officials."
     },
     {
-  name: "Mrs. Onneile Lodic Stoffel",
-  position: "Vice Secretary",
-  initials: "OS",
-  image: "/images/onneile-stoffel2.jpg",  // this is correct
-  description:
-    "Managing records and correspondence. Handles all committee documentation and communication with government officials."
-},
-{
-  name: "Mrs. Kebashebile Mbinda Mangate",
-  position: "Treasurer",
-  initials: "KB",
-  image: "/images/kebashebile-mangate2.jpg", // fixed here
-  description:
-    "Financial management and budget oversight. Ensures transparent handling of committee funds and project finances."
-},
-
+      name: "Mrs. Onneile Lodic Stoffel",
+      position: "Vice Secretary",
+      initials: "OS",
+      image: "/images/onneile-stoffel2.webp",
+      description:
+        "Managing records and correspondence. Handles all committee documentation and communication with government officials."
+    },
+    {
+      name: "Mrs. Kebashebile Mbinda Mangate",
+      position: "Treasurer",
+      initials: "KB",
+      image: "/images/kebashebile-mangate2.webp",
+      description:
+        "Financial management and budget oversight. Ensures transparent handling of committee funds and project finances."
+    },
     {
       name: "Mr. Tiro Sylvester Ramontsho",
       position: "Additional Member",
       initials: "TR",
-      image: "/images/tiro-ramontsho.jpg",
+      image: "/images/tiro-ramontsho.webp",
       description:
         "Social Entrepreneurship. Youth Community Mobiliser, Youth Led Advocate. Community engagement."
     },
@@ -61,28 +59,28 @@ export default function Committee() {
       name: "Ms. Vetondaje Mbaeva",
       position: "Additional Member",
       initials: "VM",
-      image: "/images/vetondaje-mbaeva.jpg",
+      image: "/images/vetondaje-mbaeva.webp",
       description: "Women Empowerment Led initiatives."
     },
     {
       name: "Miss Dinah Molale",
       position: "Additional Member",
       initials: "DM",
-      image: "/images/dinah-molale.jpg",
-      description: "Molapo Wing Representation ."
+      image: "/images/dinah-molale.webp",
+      description: "Molapo Wing Representation."
     },
     {
       name: "Miss Molapo Golekwang",
       position: "Additional Member",
       initials: "GM",
-      image: "/images/golekwang-molapong.jpg",
-      description: "Elderly Sapport."
+      image: "/images/golekwang-molapong.webp",
+      description: "Elderly Support."
     },
     {
       name: "Mrs. Doreen Ngakaemang",
       position: "Social Worker",
       initials: "DN",
-      image: "/images/social-worker.jpg",
+      image: "/images/social-worker.webp",
       description:
         "Community social welfare programs and support services. Assists families and individuals with social challenges and connects them to resources."
     },
@@ -90,7 +88,7 @@ export default function Committee() {
       name: "Mr. Pontsho Ditshwene",
       position: "Village Councillor",
       initials: "VC",
-      image: "/images/village-councillor.jpg",
+      image: "/images/village-councillor.webp",
       description:
         "Government liaison and community representation. Serves as the official link between the village and district administration."
     }
@@ -98,11 +96,6 @@ export default function Committee() {
 
   const handleImageError = (index) => {
     setImageErrors((prev) => ({ ...prev, [index]: true }))
-    setImageLoading((prev) => ({ ...prev, [index]: false }))
-  }
-
-  const handleImageLoad = (index) => {
-    setImageLoading((prev) => ({ ...prev, [index]: false }))
   }
 
   return (
@@ -113,69 +106,52 @@ export default function Committee() {
         </h2>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-8">
-          {members.map((member, index) => {
-            if (imageLoading[index] === undefined) {
-              setImageLoading((prev) => ({ ...prev, [index]: true }))
-            }
-
-            return (
-              <div
-                key={`${member.name}-${index}`}
-                aria-label={`Committee member ${member.name}`}
-                className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105"
-              >
-                <div className="flex items-start mb-4">
-                  <div className="relative w-28 h-28 md:w-32 md:h-32 mr-4 flex-shrink-0">
-                    {!imageErrors[index] ? (
-                      <>
-                        {imageLoading[index] && (
-                          <div className="absolute inset-0 rounded-full bg-gray-200 animate-pulse z-10 flex items-center justify-center">
-                            <div className="w-6 h-6 border-2 border-blue-500 border-t-transparent rounded-full animate-spin" />
-                          </div>
-                        )}
-
-                        <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-white shadow-lg ring-2 ring-blue-200">
-                          <Image
-                            src={member.image}
-                            alt={`${member.name} - ${member.position}`}
-                            fill
-                            unoptimized
-                            sizes="(max-width: 768px) 128px, 160px"
-                            priority={index === 0}
-                            className={`object-cover transition-opacity duration-500 ${
-                              imageLoading[index] ? "opacity-0" : "opacity-100"
-                            }`}
-                            style={{ objectPosition: "center top" }}
-                            onError={() => handleImageError(index)}
-                            onLoadingComplete={() => handleImageLoad(index)}
-                          />
-                        </div>
-                      </>
-                    ) : (
-                      <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center text-xl font-bold border-4 border-white shadow-lg ring-2 ring-blue-200">
-                        {member.initials}
-                      </div>
-                    )}
-                  </div>
-
-                  <div className="min-w-0 flex-1">
-                    <h3 className="text-lg font-bold text-gray-800 leading-tight mb-1">
-                      {member.name}
-                    </h3>
-                    <p className="text-blue-600 font-semibold text-sm">
-                      {member.position}
-                    </p>
-                  </div>
+          {members.map((member, index) => (
+            <div
+              key={`${member.name}-${index}`}
+              aria-label={`Committee member ${member.name}`}
+              className="bg-white rounded-xl shadow-lg p-6 hover:shadow-xl transition-all duration-300 hover:scale-105"
+            >
+              <div className="flex items-start mb-4">
+                <div className="relative w-28 h-28 md:w-32 md:h-32 mr-4 flex-shrink-0">
+                  {!imageErrors[index] ? (
+                    <div className="relative w-full h-full rounded-full overflow-hidden border-4 border-white shadow-lg ring-2 ring-blue-200">
+                      <Image
+                        src={member.image}
+                        alt={`${member.name} - ${member.position}`}
+                        width={128}
+                        height={128}
+                        sizes="(max-width: 768px) 100vw, 128px"
+                        className="object-cover transition-opacity duration-500"
+                        onError={() => handleImageError(index)}
+                        priority={index === 0}
+                        loading={index === 0 ? "eager" : "lazy"}
+                      />
+                    </div>
+                  ) : (
+                    <div className="w-full h-full rounded-full bg-gradient-to-br from-blue-500 to-blue-700 text-white flex items-center justify-center text-xl font-bold border-4 border-white shadow-lg ring-2 ring-blue-200">
+                      {member.initials}
+                    </div>
+                  )}
                 </div>
 
-                <div className="border-t border-gray-100 pt-4">
-                  <p className="text-gray-600 text-sm leading-relaxed">
-                    {member.description}
+                <div className="min-w-0 flex-1">
+                  <h3 className="text-lg font-bold text-gray-800 leading-tight mb-1">
+                    {member.name}
+                  </h3>
+                  <p className="text-blue-600 font-semibold text-sm">
+                    {member.position}
                   </p>
                 </div>
               </div>
-            )
-          })}
+
+              <div className="border-t border-gray-100 pt-4">
+                <p className="text-gray-600 text-sm leading-relaxed">
+                  {member.description}
+                </p>
+              </div>
+            </div>
+          ))}
         </div>
       </div>
     </section>
