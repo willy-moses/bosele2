@@ -76,6 +76,20 @@ export default function Header() {
   const [isScrolled, setIsScrolled] = useState(false)
   const [activeSection, setActiveSection] = useState('home')
 
+  // Prevent body scroll when mobile menu is open
+  useEffect(() => {
+    if (mobileMenuOpen) {
+      document.body.style.overflow = 'hidden'
+    } else {
+      document.body.style.overflow = 'unset'
+    }
+
+    // Cleanup function
+    return () => {
+      document.body.style.overflow = 'unset'
+    }
+  }, [mobileMenuOpen])
+
   useEffect(() => {
     const handleScroll = () => {
       setIsScrolled(window.scrollY > 20)
@@ -200,8 +214,10 @@ export default function Header() {
       </div>
 
       {/* Mobile menu */}
-      <div className={`lg:hidden transition-all duration-500 ease-in-out ${mobileMenuOpen ? 'max-h-screen opacity-100' : 'max-h-0 opacity-0 overflow-hidden'}`}>
-        <div className="bg-emerald-900/95 backdrop-blur-md border-t border-white/20">
+      <div className={`lg:hidden fixed inset-0 top-[var(--header-height,88px)] transition-all duration-500 ease-in-out ${
+        mobileMenuOpen ? 'opacity-100 visible' : 'opacity-0 invisible'
+      }`}>
+        <div className="h-full bg-emerald-900/95 backdrop-blur-md border-t border-white/20 overflow-y-auto">
           <nav className="max-w-7xl mx-auto px-4 py-6">
             <ul className="space-y-2">
               {navigation.map((item, index) => {

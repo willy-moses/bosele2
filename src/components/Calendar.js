@@ -70,7 +70,7 @@ export default function Calendar() {
   }
 
   return (
-    <section className="py-16 px-4 bg-gray-50">
+    <section id="calendar" className="py-16 px-4 bg-gray-50">
       <div className="max-w-6xl mx-auto">
         <h2 className="text-3xl font-bold text-center mb-12 text-blue-600">Community Calendar</h2>
         <div className="max-w-4xl mx-auto bg-white rounded-xl shadow-lg p-8">
