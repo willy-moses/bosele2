@@ -2,7 +2,7 @@ import { MapPin, Phone, Mail, Facebook, MessageCircle, Instagram, Twitter, Youtu
 
 export default function Footer() {
   const socialLinks = [
-    { name: 'Facebook', href: 'https://web.facebook.com/profile.php?id=61584966610948&sk=about', icon: Facebook, gradient: 'from-blue-500 to-blue-600' },
+    { name: 'Facebook', href: 'https://www.facebook.com/BoseleVDC', icon: Facebook, gradient: 'from-blue-500 to-blue-600' },
     { name: 'WhatsApp', href: 'https://chat.whatsapp.com/GU1seuB79LZ0WPOdKsygDq', icon: MessageCircle, gradient: 'from-green-500 to-green-600' },
     { name: 'Instagram', href: 'https://instagram.com/bosele_kgotla', icon: Instagram, gradient: 'from-pink-500 to-pink-600' },
     { name: 'Twitter', href: 'https://twitter.com/bosele_kgotla', icon: Twitter, gradient: 'from-blue-400 to-blue-500' },
