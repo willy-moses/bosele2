@@ -126,7 +126,7 @@ export default function Footer() {
                 <Calendar className="w-4 h-4 text-green-200 mt-0.5 flex-shrink-0" />
                 <div>
                   <p className="font-semibold text-sm text-white">Monthly Kgotla Meeting</p>
-                  <p className="text-xs text-gray-400">First Saturday of each month</p>
+                  <p className="text-xs text-gray-400">Ranges from 11ᵗʰ to 15ᵗʰ  of each month</p>
                 </div>
               </div>
               <div className="flex items-start gap-2">
