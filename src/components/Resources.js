@@ -32,18 +32,30 @@ export default function Resources() {
     { id: 5, title: 'Complaint/Suggestion Form', description: 'Submit complaints or suggestions to the committee', file: '/forms/complaint-form.pdf' },
   ]
 
-  const handleDownload = (filePath, fileName) => {
-    // In production, this would trigger an actual file download
-    // For now, it will show an alert
-    alert(`Downloading: ${fileName}\n\nNote: In production, this will download from: ${filePath}`)
-    
-    // Actual download code (uncomment when files are available):
-    // const link = document.createElement('a')
-    // link.href = filePath
-    // link.download = fileName
-    // document.body.appendChild(link)
-    // link.click()
-    // document.body.removeChild(link)
+  const handleDownload = async (filePath, fileName) => {
+    try {
+      // For the daycare registration form, use the actual PDF file
+      if (filePath === '/forms/daycare-registration.pdf') {
+        // Create a link element to download the actual PDF
+        const link = document.createElement('a')
+        link.href = '/daycare-registration.pdf' // This file should be in your public directory
+        link.download = 'Bosele_Daycare_Registration_Form.pdf'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+        
+        // Optional: Show success message
+        setTimeout(() => {
+          alert('Download started! Check your downloads folder for the Bosele Day Care Registration Form.')
+        }, 100)
+      } else {
+        // For other files not yet created, show a message
+        alert(`"${fileName}" is being prepared.\n\nPlease contact the Bosele Day Care office for immediate access to this document.`)
+      }
+    } catch (error) {
+      console.error('Download error:', error)
+      alert('There was an error starting the download. Please try again or contact the office.')
+    }
   }
 
   const resources = [
@@ -352,9 +364,9 @@ export default function Resources() {
         {/* Quick Stats */}
         <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
-            { number: '50+', label: 'Documents Available' },
-            { number: '12', label: 'Active Projects' },
-            { number: '200+', label: 'Downloads This Month' },
+            { number: '5+', label: 'Documents Available' },
+            { number: '4', label: 'Active Projects' },
+            { number: '3+', label: 'Downloads This Month' },
             { number: '24/7', label: 'Online Access' }
           ].map((stat, index) => (
             <div key={index} className="text-center p-4 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">

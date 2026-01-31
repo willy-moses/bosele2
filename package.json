@@ -3,15 +3,15 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-  "dev": "next dev --turbopack",
-  "build": "next build",
-  "start": "next start",
-  "lint": "next lint",
-  "export": "next export"
+    "dev": "next dev --turbopack",
+    "build": "next build",
+    "start": "next start",
+    "lint": "next lint",
+    "export": "next export"
   },
   "dependencies": {
     "@heroicons/react": "^2.2.0",
-    "@prisma/client": "^6.19.1",
+    "@prisma/client": "^6.19.2",
     "@supabase/supabase-js": "^2.78.0",
     "@vercel/postgres": "^0.10.0",
     "firebase": "^12.7.0",
@@ -32,7 +32,7 @@
     "eslint": "^9",
     "eslint-config-next": "15.4.6",
     "postcss": "^8.5.6",
-    "prisma": "^6.19.1",
+    "prisma": "^6.19.2",
     "tailwindcss": "^4.1.12"
   }
 }

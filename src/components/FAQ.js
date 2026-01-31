@@ -8,7 +8,7 @@ export default function FAQ() {
   const faqItems = [
     {
       question: 'How can I get involved in community projects?',
-      answer: 'Attend our monthly kgotla meetings on the first Saturday of each month. You can also contact any committee member to express your interest in volunteering for specific projects or initiatives.',
+      answer: 'Attend our monthly kgotla meetings either from 11ᵗʰ to 15ᵗʰ of each month. You can also contact any committee member to express your interest in volunteering for specific projects or initiatives.',
       category: 'Participation'
     },
     {
@@ -33,7 +33,7 @@ export default function FAQ() {
     },
     {
       question: 'What development projects are currently active?',
-      answer: 'Current projects include water infrastructure improvements, youth skills training programs, and agricultural development initiatives. Visit our projects section for detailed updates.',
+      answer: 'Current projects include Construction of Cultural Village , Youth Community Innovation Hub , and Cummunity Garden. Visit our projects section for detailed updates.',
       category: 'Projects'
     }
   ]
@@ -138,7 +138,7 @@ export default function FAQ() {
         <div className="mt-8 bg-gradient-to-r from-emerald-500 to-green-600 rounded-2xl p-6 text-white">
           <div className="text-center">
             <h4 className="text-xl font-bold mb-2">Next Kgotla Meeting</h4>
-            <p className="opacity-90 mb-2">First Saturday of every month at 10:00 AM</p>
+            <p className="opacity-90 mb-2">Ranges from 11ᵗʰ to 15ᵗʰ  of every month at 10:00 AM</p>
             <p className="text-sm opacity-75">Community Hall - All residents welcome</p>
           </div>
         </div>

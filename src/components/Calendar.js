@@ -26,9 +26,8 @@ export default function Calendar() {
   const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
 
   const upcomingEvents = [
-    { date: 'August 10, 2025', event: 'Monthly Kgotla Meeting - 10:00 AM' },
-    { date: 'August 15, 2025', event: 'Youth Skills Training Workshop - 2:00 PM' },
-    { date: 'August 22, 2025', event: 'Health Screening Day - 9:00 AM' }
+    { date: 'February 12, 2026', event: 'Lanch of Bosele official Website and Social Platform - 10:00 AM' },
+  
   ]
 
   // Use useMemo to memoize eventDays so it doesn't change on every render

@@ -26,10 +26,10 @@ const GraduationIcon = ({ className }) => (
 
 export default function Statistics() {
   const stats = [
-    { icon: UsersIcon, number: '1,247', label: 'Community Members Served' },
-    { icon: HammerIcon, number: '23', label: 'Projects Completed' },
-    { icon: WaterIcon, number: '5', label: 'Water Points Installed' },
-    { icon: GraduationIcon, number: '180', label: 'Students Supported' }
+    { icon: UsersIcon, number: '10', label: 'Community Members Served' },
+    { icon: HammerIcon, number: '2', label: 'Projects Completed' },
+    { icon: WaterIcon, number: '0', label: 'Water Points Installed' },
+    { icon: GraduationIcon, number: '20', label: 'Students Supported' }
   ]
 
   return (
