@@ -131,14 +131,11 @@ export default function Header() {
             {/* Logo */}
             <div className="relative">
               <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-white/20 to-white/10 rounded-2xl border-2 border-white/30 backdrop-blur-sm flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 overflow-hidden">
-                <Image
-                  src="/images/logo.webP"
-                  alt="Bosele Kgotla VDC Logo"
-                  width={100}
-                  height={100}
-                  className="w-full h-full object-contain"
-                  priority
-                />
+                <img
+  src="/images/logo.webp"
+  alt="Bosele Kgotla VDC Logo"
+  className="w-full h-full object-contain"
+/>
               </div>
               <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/20 to-green-300/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
             </div>
