@@ -132,7 +132,7 @@ export default function Header() {
             <div className="relative">
               <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-white/20 to-white/10 rounded-2xl border-2 border-white/30 backdrop-blur-sm flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 overflow-hidden">
                 <Image
-                  src="images/logo.webP"
+                  src="/images/logo.webP"
                   alt="Bosele Kgotla VDC Logo"
                   width={100}
                   height={100}
