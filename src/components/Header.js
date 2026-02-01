@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-import Link from 'next/link'
+
 
 // SVG Icons
 const MenuIcon = ({ className }) => (
@@ -129,22 +129,20 @@ export default function Header() {
         <div className="flex justify-between items-center py-4 lg:py-6">
           <div className="flex items-center space-x-3 lg:space-x-4 group">
             {/* Logo */}
-            <div className="relative">
-              <div className="w-14 h-14 sm:w-16 sm:h-16 lg:w-20 lg:h-20 bg-gradient-to-br from-white/20 to-white/10 rounded-2xl border-2 border-white/30 backdrop-blur-sm flex items-center justify-center transition-all duration-300 group-hover:scale-110 group-hover:rotate-3 overflow-hidden">
-                <img
-  src="/images/logo.webp"
-  alt="Bosele Kgotla VDC Logo"
-  className="w-full h-full object-contain"
-/>
-              </div>
-              <div className="absolute inset-0 bg-gradient-to-br from-yellow-400/20 to-green-300/20 rounded-2xl blur opacity-0 group-hover:opacity-100 transition-opacity duration-300"></div>
+            <div className="relative transition-all duration-300 group-hover:scale-105">
+              <Image
+                src="/images/log.webP"
+                alt="Bosele Kgotla VDC Logo"
+                width={180}
+                height={180}
+                className="w-16 h-16 sm:w-20 sm:h-20 lg:w-28 lg:h-28 object-contain"
+                style={{ filter: 'drop-shadow(0 4px 6px rgba(0,0,0,0.3))' }}
+                priority
+              />
             </div>
 
             <div className="text-white">
-              <h1 className="text-base sm:text-lg lg:text-2xl xl:text-3xl font-bold leading-tight group-hover:text-green-100 transition-colors duration-300">
-                Bosele Kgotla Village Development Committee
-              </h1>
-              <p className="text-xs sm:text-sm lg:text-base opacity-90 text-green-100 mt-1">
+              <p className="text-xs sm:text-sm lg:text-base opacity-90 text-green-100">
                 🏛️ Serving Gantsi District • 🤝 Building Community Together
               </p>
             </div>
