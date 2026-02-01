@@ -131,7 +131,7 @@ export default function Header() {
             {/* Logo */}
             <div className="relative transition-all duration-300 group-hover:scale-105">
               <Image
-                src="/images/log.webP"
+                src="/images/log.webp"
                 alt="Bosele Kgotla VDC Logo"
                 width={180}
                 height={180}
