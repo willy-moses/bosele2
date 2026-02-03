@@ -85,7 +85,7 @@ export default function Committee() {
         "Community social welfare programs and support services. Assists families and individuals with social challenges and connects them to resources."
     },
     {
-      name: "Mr. Pontsho Ditshwene",
+      name: "Mr. Poifo Ditshwene",
       position: "Village Councillor",
       initials: "VC",
       image: "/images/village-councillor.webp",
