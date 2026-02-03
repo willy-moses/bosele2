@@ -24,7 +24,7 @@ export default function Committee() {
         "Supporting leadership and project coordination. Active in women's development programs and youth mentorship."
     },
     {
-      name: "Mrs. Violet Onny Kaome",
+      name: "Miss. Violet Onny Kaome",
       position: "Secretary",
       initials: "VK",
       image: "/images/violet-kaome.webp",
