@@ -65,7 +65,7 @@ export default function About() {
           {/* Motto */}
           <div className="mt-8">
             <p className="text-2xl md:text-3xl font-semibold text-emerald-700 italic">
-              "Equality for All, Progress for Bosele"
+              &ldquo;Equality for All, Progress for Bosele&rdquo;
             </p>
           </div>
         </div>
