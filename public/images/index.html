@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Committee Members - Print Version</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background-color: white;
+            padding: 20px;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 900px;
+            margin: 0 auto;
+        }
+
+        .members-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .member {
+            text-align: center;
+            page-break-inside: avoid;
+        }
+
+        .image-container {
+            width: 120px;
+            height: 120px;
+            margin: 0 auto 15px;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid #2563eb;
+            background-color: #f0f0f0;
+        }
+
+        .member-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .initials {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+            font-size: 32px;
+            font-weight: bold;
+        }
+
+        .name {
+            font-size: 16px;
+            font-weight: bold;
+            color: #1a1a1a;
+            margin-bottom: 5px;
+            line-height: 1.3;
+        }
+
+        .position {
+            font-size: 14px;
+            color: #2563eb;
+            font-weight: 500;
+        }
+
+        @media print {
+            @page {
+                margin: 1cm;
+                size: A4 portrait;
+            }
+
+            body {
+                padding: 10px;
+            }
+
+            .members-grid {
+                gap: 20px;
+            }
+
+            .member {
+                page-break-inside: avoid;
+            }
+        }
+
+        @media screen {
+            body {
+                background-color: #f5f5f5;
+            }
+
+            .container {
+                background-color: white;
+                padding: 40px;
+                box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+                margin-top: 20px;
+                margin-bottom: 20px;
+            }
+        }
+
+        /* Responsive for smaller screens */
+        @media screen and (max-width: 768px) {
+            .members-grid {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+
+        @media screen and (max-width: 480px) {
+            .members-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="members-grid">
+            <!-- Member 1 -->
+            <div class="member">
+                <div class="image-container">
+                    <img src="/images/komberes-monyatse.webp" 
+                         alt="Mr. Komberes Monyatse" 
+                         class="member-image"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="initials" style="display: none;">KM</div>
+                </div>
+                <div class="name">Mr. Komberes Monyatse</div>
+                <div class="position">Chairperson</div>
+            </div>
+
+            <!-- Member 2 -->
+            <div class="member">
+                <div class="image-container">
+                    <img src="/images/sandy-botshake.webp" 
+                         alt="Miss. Sandy Botshake" 
+                         class="member-image"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="initials" style="display: none;">SB</div>
+                </div>
+                <div class="name">Miss. Sandy Botshake</div>
+                <div class="position">Vice Chairperson</div>
+            </div>
+
+            <!-- Member 3 -->
+            <div class="member">
+                <div class="image-container">
+                    <img src="/images/violet-kaome.webp" 
+                         alt="Miss. Violet Onny Kaome" 
+                         class="member-image"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="initials" style="display: none;">VK</div>
+                </div>
+                <div class="name">Miss. Violet Onny Kaome</div>
+                <div class="position">Secretary</div>
+            </div>
+
+            <!-- Member 4 -->
+            <div class="member">
+                <div class="image-container">
+                    <img src="/images/onneile-stoffel2.webp" 
+                         alt="Mrs. Onneile Lodic Stoffel" 
+                         class="member-image"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="initials" style="display: none;">OS</div>
+                </div>
+                <div class="name">Mrs. Onneile Lodic Stoffel</div>
+                <div class="position">Vice Secretary</div>
+            </div>
+
+            <!-- Member 5 -->
+            <div class="member">
+                <div class="image-container">
+                    <img src="/images/kebashebile-mangate2.webp" 
+                         alt="Mrs. Kebashebile Mbinda Mangate" 
+                         class="member-image"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="initials" style="display: none;">KB</div>
+                </div>
+                <div class="name">Mrs. Kebashebile Mbinda Mangate</div>
+                <div class="position">Treasurer</div>
+            </div>
+
+            <!-- Member 6 -->
+            <div class="member">
+                <div class="image-container">
+                    <img src="/images/tiro-ramontsho.webp" 
+                         alt="Mr. Tiro Sylvester Ramontsho" 
+                         class="member-image"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="initials" style="display: none;">TR</div>
+                </div>
+                <div class="name">Mr. Tiro Sylvester Ramontsho</div>
+                <div class="position">Additional Member</div>
+            </div>
+
+            <!-- Member 7 -->
+            <div class="member">
+                <div class="image-container">
+                    <img src="/images/vetondaje-mbaeva.webp" 
+                         alt="Ms. Vetondaje Mbaeva" 
+                         class="member-image"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="initials" style="display: none;">VM</div>
+                </div>
+                <div class="name">Ms. Vetondaje Mbaeva</div>
+                <div class="position">Additional Member</div>
+            </div>
+
+            <!-- Member 8 -->
+            <div class="member">
+                <div class="image-container">
+                    <img src="/images/dinah-molale.webp" 
+                         alt="Miss Dinah Molale" 
+                         class="member-image"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="initials" style="display: none;">DM</div>
+                </div>
+                <div class="name">Miss Dinah Molale</div>
+                <div class="position">Additional Member</div>
+            </div>
+
+            <!-- Member 9 -->
+            <div class="member">
+                <div class="image-container">
+                    <img src="/images/golekwang-molapong.webp" 
+                         alt="Miss Molapo Golekwang" 
+                         class="member-image"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="initials" style="display: none;">GM</div>
+                </div>
+                <div class="name">Miss Molapo Golekwang</div>
+                <div class="position">Additional Member</div>
+            </div>
+
+            <!-- Member 10 -->
+            <div class="member">
+                <div class="image-container">
+                    <img src="/images/social-worker.webp" 
+                         alt="Mrs. Doreen Ngakaemang" 
+                         class="member-image"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="initials" style="display: none;">DN</div>
+                </div>
+                <div class="name">Mrs. Doreen Ngakaemang</div>
+                <div class="position">Social Worker</div>
+            </div>
+
+            <!-- Member 11 -->
+            <div class="member">
+                <div class="image-container">
+                    <img src="/images/village-councillor.webp" 
+                         alt="Mr. Poifo Ditshwene" 
+                         class="member-image"
+                         onerror="this.style.display='none'; this.nextElementSibling.style.display='flex';">
+                    <div class="initials" style="display: none;">VC</div>
+                </div>
+                <div class="name">Mr. Poifo Ditshwene</div>
+                <div class="position">Village Councillor</div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

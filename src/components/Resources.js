@@ -1,6 +1,6 @@
 'use client'
 
-import { ClipboardList, BarChart3, FileText, BookOpen, Download, Eye, FileDown, BookMarked, X } from 'lucide-react'
+import { ClipboardList, BarChart3, FileText, BookOpen, Download, Eye, FileDown, BookMarked, X, Languages } from 'lucide-react'
 import { useState } from 'react'
 
 export default function Resources() {
@@ -8,50 +8,46 @@ export default function Resources() {
   const [showMinutes, setShowMinutes] = useState(false)
   const [showReports, setShowReports] = useState(false)
   const [showForms, setShowForms] = useState(false)
+  const [minutesLanguage, setMinutesLanguage] = useState('english') // 'english' or 'setswana'
 
-  // Sample data - replace with actual data from your backend
+  // Bilingual meeting minutes data - ONLY AVAILABLE FILES
   const meetingMinutes = [
-    { id: 1, title: 'Kgotla Meeting - January 2026', date: '2026-01-04', file: '/documents/minutes-jan-2026.pdf' },
-    { id: 2, title: 'Kgotla Meeting - December 2025', date: '2025-12-07', file: '/documents/minutes-dec-2025.pdf' },
-    { id: 3, title: 'Kgotla Meeting - November 2025', date: '2025-11-02', file: '/documents/minutes-nov-2025.pdf' },
-    { id: 4, title: 'Kgotla Meeting - October 2025', date: '2025-10-05', file: '/documents/minutes-oct-2025.pdf' },
+    { 
+      id: 1, 
+      title: {
+        english: 'Kgotla Meeting - February 4, 2026',
+        setswana: 'Kopano ya Kgotla - Tlhakole 4, 2026'
+      },
+      date: '2026-02-04', 
+      files: {
+        english: '/minutes-jan-2026-en.pdf',
+        setswana: '/minutes-jan-2026-sn.pdf'
+      }
+    },
   ]
 
-  const projectReports = [
-    { id: 1, title: 'Ghanzi Blocks 1-6 Land Servicing Progress Report', date: '2025-12-15', file: '/documents/land-servicing-report.pdf', status: 'In Progress' },
-    { id: 2, title: 'Youth Community Hub Development Report', date: '2025-12-10', file: '/documents/youth-hub-report.pdf', status: 'Planning' },
-    { id: 3, title: 'Capstone Road Installation Project Report', date: '2025-11-20', file: '/documents/capstone-report.pdf', status: 'Upcoming' },
-    { id: 4, title: 'Day Care Center Annual Report 2025', date: '2025-11-01', file: '/documents/daycare-report-2025.pdf', status: 'Completed' },
-  ]
+  // Project reports - EMPTY until you add actual reports
+  const projectReports = []
 
+  // Application forms - ONLY AVAILABLE FILES
   const applicationForms = [
-    { id: 1, title: 'Day Care Center Registration Form', description: 'Register your child at Bosele Day Care Center', file: '/forms/daycare-registration.pdf' },
-    { id: 2, title: 'Community Assistance Application', description: 'Apply for community support and assistance', file: '/forms/community-assistance.pdf' },
-    { id: 3, title: 'Project Proposal Template', description: 'Submit proposals for community projects', file: '/forms/project-proposal.pdf' },
-    { id: 4, title: 'Youth Program Enrollment Form', description: 'Enroll in youth development programs', file: '/forms/youth-enrollment.pdf' },
-    { id: 5, title: 'Complaint/Suggestion Form', description: 'Submit complaints or suggestions to the committee', file: '/forms/complaint-form.pdf' },
+    { 
+      id: 1, 
+      title: 'Day Care Center Registration Form', 
+      description: 'Register your child at Bosele Day Care Center', 
+      file: '/daycare-registration.pdf' 
+    },
   ]
 
   const handleDownload = async (filePath, fileName) => {
     try {
-      // For the daycare registration form, use the actual PDF file
-      if (filePath === '/forms/daycare-registration.pdf') {
-        // Create a link element to download the actual PDF
-        const link = document.createElement('a')
-        link.href = '/daycare-registration.pdf' // This file should be in your public directory
-        link.download = 'Bosele_Daycare_Registration_Form.pdf'
-        document.body.appendChild(link)
-        link.click()
-        document.body.removeChild(link)
-        
-        // Optional: Show success message
-        setTimeout(() => {
-          alert('Download started! Check your downloads folder for the Bosele Day Care Registration Form.')
-        }, 100)
-      } else {
-        // For other files not yet created, show a message
-        alert(`"${fileName}" is being prepared.\n\nPlease contact the Bosele Day Care office for immediate access to this document.`)
-      }
+      // For actual PDF files in the public directory
+      const link = document.createElement('a')
+      link.href = filePath
+      link.download = fileName.replace(/[^a-zA-Z0-9_\s]/g, '_') + '.pdf'
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
     } catch (error) {
       console.error('Download error:', error)
       alert('There was an error starting the download. Please try again or contact the office.')
@@ -156,7 +152,7 @@ export default function Resources() {
           })}
         </div>
 
-        {/* Meeting Minutes Modal */}
+        {/* Meeting Minutes Modal - BILINGUAL */}
         {showMinutes && (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50" onClick={() => setShowMinutes(false)}>
             <div className="bg-white rounded-2xl shadow-2xl max-w-3xl w-full max-h-[90vh] overflow-y-auto" onClick={(e) => e.stopPropagation()}>
@@ -167,31 +163,95 @@ export default function Resources() {
                 >
                   <X className="w-6 h-6" />
                 </button>
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 mb-4">
                   <ClipboardList className="w-8 h-8" />
-                  <h3 className="text-2xl font-bold">Meeting Minutes</h3>
+                  <h3 className="text-2xl font-bold">
+                    {minutesLanguage === 'english' ? 'Meeting Minutes' : 'Diriswa tsa Kopano'}
+                  </h3>
+                </div>
+
+                {/* Language Toggle */}
+                <div className="flex items-center gap-2 bg-white bg-opacity-20 rounded-lg p-1 w-fit">
+                  <button
+                    onClick={() => setMinutesLanguage('english')}
+                    className={`px-4 py-2 rounded-md font-semibold transition-all duration-300 flex items-center gap-2 ${
+                      minutesLanguage === 'english' 
+                        ? 'bg-white text-blue-600 shadow-lg' 
+                        : 'text-white hover:bg-white hover:bg-opacity-10'
+                    }`}
+                  >
+                    <Languages className="w-4 h-4" />
+                    English
+                  </button>
+                  <button
+                    onClick={() => setMinutesLanguage('setswana')}
+                    className={`px-4 py-2 rounded-md font-semibold transition-all duration-300 flex items-center gap-2 ${
+                      minutesLanguage === 'setswana' 
+                        ? 'bg-white text-blue-600 shadow-lg' 
+                        : 'text-white hover:bg-white hover:bg-opacity-10'
+                    }`}
+                  >
+                    <Languages className="w-4 h-4" />
+                    Setswana
+                  </button>
                 </div>
               </div>
 
               <div className="p-8">
-                <p className="text-gray-600 mb-6">Download minutes from recent kgotla meetings and committee discussions.</p>
-                <div className="space-y-4">
-                  {meetingMinutes.map((minute) => (
-                    <div key={minute.id} className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-100 hover:shadow-md transition-shadow">
-                      <div>
-                        <h4 className="font-semibold text-slate-800">{minute.title}</h4>
-                        <p className="text-sm text-gray-600">{minute.date}</p>
+                <p className="text-gray-600 mb-6">
+                  {minutesLanguage === 'english' 
+                    ? 'Download minutes from recent kgotla meetings and committee discussions.'
+                    : 'O ka fitlhelela pego ya metsotso ya diphutlhego tsa kgotla bosheng le dipuisano tsa komiti fa.'
+                  }
+                </p>
+                {meetingMinutes.length > 0 ? (
+                  <div className="space-y-4">
+                    {meetingMinutes.map((minute) => (
+                      <div key={minute.id} className="flex items-center justify-between p-4 bg-blue-50 rounded-lg border border-blue-100 hover:shadow-md transition-shadow">
+                        <div>
+                          <h4 className="font-semibold text-slate-800">
+                            {minute.title[minutesLanguage]}
+                          </h4>
+                          <p className="text-sm text-gray-600">{minute.date}</p>
+                        </div>
+                        <button 
+                          onClick={() => handleDownload(
+                            minute.files[minutesLanguage], 
+                            minute.title[minutesLanguage]
+                          )}
+                          className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center gap-2 whitespace-nowrap"
+                        >
+                          <Download className="w-4 h-4" />
+                          {minutesLanguage === 'english' ? 'Download' : 'Kopisetsa'}
+                        </button>
                       </div>
-                      <button 
-                        onClick={() => handleDownload(minute.file, minute.title)}
-                        className="bg-gradient-to-r from-blue-500 to-indigo-600 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center gap-2"
-                      >
-                        <Download className="w-4 h-4" />
-                        Download
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <p className="text-gray-500">
+                      {minutesLanguage === 'english' 
+                        ? 'No meeting minutes available yet. Check back soon!'
+                        : 'Ga go na diriswa tsa kopano tsa gone jaanong. Tlhola gape!'
+                      }
+                    </p>
+                  </div>
+                )}
+
+                {/* Language Info Badge */}
+                {meetingMinutes.length > 0 && (
+                  <div className="mt-6 p-4 bg-blue-50 rounded-lg border-l-4 border-blue-500">
+                    <p className="text-sm text-gray-700 leading-relaxed flex items-start gap-2">
+                      <Languages className="w-5 h-5 text-blue-600 flex-shrink-0 mt-0.5" />
+                      <span>
+                        {minutesLanguage === 'english' 
+                          ? 'All meeting minutes are available in both English and Setswana. Use the language toggle above to switch between versions.'
+                          : 'Dipego tsotlhe tsa di phutlhego di fitlhelelwa ka Sekgoa le Setswana. Dirisa konopo ya puo e e kwa godimo go fetola pego magareng ga dipuo ka bobedi jwa tsone.'
+                        }
+                      </span>
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -216,26 +276,34 @@ export default function Resources() {
 
               <div className="p-8">
                 <p className="text-gray-600 mb-6">View detailed reports on completed and ongoing community development projects.</p>
-                <div className="space-y-4">
-                  {projectReports.map((report) => (
-                    <div key={report.id} className="p-4 bg-emerald-50 rounded-lg border border-emerald-100 hover:shadow-md transition-shadow">
-                      <div className="flex items-start justify-between mb-2">
-                        <h4 className="font-semibold text-slate-800 flex-1">{report.title}</h4>
-                        <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(report.status)}`}>
-                          {report.status}
-                        </span>
+                {projectReports.length > 0 ? (
+                  <div className="space-y-4">
+                    {projectReports.map((report) => (
+                      <div key={report.id} className="p-4 bg-emerald-50 rounded-lg border border-emerald-100 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between mb-2">
+                          <h4 className="font-semibold text-slate-800 flex-1">{report.title}</h4>
+                          <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${getStatusColor(report.status)}`}>
+                            {report.status}
+                          </span>
+                        </div>
+                        <p className="text-sm text-gray-600 mb-3">{report.date}</p>
+                        <button 
+                          onClick={() => handleDownload(report.file, report.title)}
+                          className="bg-gradient-to-r from-emerald-500 to-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center gap-2"
+                        >
+                          <Eye className="w-4 h-4" />
+                          View Report
+                        </button>
                       </div>
-                      <p className="text-sm text-gray-600 mb-3">{report.date}</p>
-                      <button 
-                        onClick={() => handleDownload(report.file, report.title)}
-                        className="bg-gradient-to-r from-emerald-500 to-green-600 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center gap-2"
-                      >
-                        <Eye className="w-4 h-4" />
-                        View Report
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <BarChart3 className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                    <p className="text-gray-500 mb-2 font-medium">No Project Reports Available Yet</p>
+                    <p className="text-sm text-gray-400">Project reports will be published here as they become available.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -260,21 +328,29 @@ export default function Resources() {
 
               <div className="p-8">
                 <p className="text-gray-600 mb-6">Download forms for community assistance, project proposals, and various services.</p>
-                <div className="space-y-4">
-                  {applicationForms.map((form) => (
-                    <div key={form.id} className="p-4 bg-purple-50 rounded-lg border border-purple-100 hover:shadow-md transition-shadow">
-                      <h4 className="font-semibold text-slate-800 mb-1">{form.title}</h4>
-                      <p className="text-sm text-gray-600 mb-3">{form.description}</p>
-                      <button 
-                        onClick={() => handleDownload(form.file, form.title)}
-                        className="bg-gradient-to-r from-purple-500 to-violet-600 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center gap-2"
-                      >
-                        <FileDown className="w-4 h-4" />
-                        Download Form
-                      </button>
-                    </div>
-                  ))}
-                </div>
+                {applicationForms.length > 0 ? (
+                  <div className="space-y-4">
+                    {applicationForms.map((form) => (
+                      <div key={form.id} className="p-4 bg-purple-50 rounded-lg border border-purple-100 hover:shadow-md transition-shadow">
+                        <h4 className="font-semibold text-slate-800 mb-1">{form.title}</h4>
+                        <p className="text-sm text-gray-600 mb-3">{form.description}</p>
+                        <button 
+                          onClick={() => handleDownload(form.file, form.title)}
+                          className="bg-gradient-to-r from-purple-500 to-violet-600 text-white px-4 py-2 rounded-lg font-semibold hover:shadow-lg transition-all duration-300 flex items-center gap-2"
+                        >
+                          <FileDown className="w-4 h-4" />
+                          Download Form
+                        </button>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-8">
+                    <FileText className="w-16 h-16 mx-auto text-gray-300 mb-4" />
+                    <p className="text-gray-500 mb-2 font-medium">No Forms Available Yet</p>
+                    <p className="text-sm text-gray-400">Application forms will be published here as they become available.</p>
+                  </div>
+                )}
               </div>
             </div>
           </div>
@@ -364,9 +440,9 @@ export default function Resources() {
         {/* Quick Stats */}
         <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
-            { number: '5+', label: 'Documents Available' },
-            { number: '4', label: 'Active Projects' },
-            { number: '3+', label: 'Downloads This Month' },
+            { number: meetingMinutes.length.toString(), label: 'Meeting Minutes' },
+            { number: projectReports.length.toString(), label: 'Project Reports' },
+            { number: applicationForms.length.toString(), label: 'Forms Available' },
             { number: '24/7', label: 'Online Access' }
           ].map((stat, index) => (
             <div key={index} className="text-center p-4 bg-white rounded-xl shadow-md hover:shadow-lg transition-shadow duration-300">

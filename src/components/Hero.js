@@ -2,9 +2,10 @@
 
 import { useState, useEffect } from "react"
 import Image from "next/image"
-import { ChevronLeft, ChevronRight, Play, Pause, ArrowDown } from "lucide-react"
+import { ChevronLeft, ChevronRight, Play, Pause, ArrowDown, AlertTriangle } from "lucide-react"
 
 const slides = [
+  
   {
     image: "/images/kgt.webp",
     title: "Welcome to Bosele Kgotla",
@@ -44,6 +45,17 @@ const slides = [
     buttonLink: "#activities",
     gradient: "from-green-900/60 via-teal-800/50 to-cyan-700/60",
     isScrollLink: true,
+  },
+  {
+    image: "/images/foot_mouth.webp",
+    title: "⚠️ URGENT: Foot and Mouth Disease Alert",
+    subtitle: "Livestock Health Emergency • Immediate Action Required",
+    description: "FMD outbreak confirmed in North East District. Movement of cattle, goats, sheep and pigs is STRICTLY PROHIBITED. Report sick animals immediately. Protect your livestock and our community.",
+    buttonText: "View Safety Guidelines",
+    buttonLink: "#fmd-alert",
+    gradient: "from-red-900/75 via-orange-800/65 to-amber-700/70",
+    isScrollLink: true,
+    isUrgent: true,
   },
 ]
 
@@ -116,6 +128,19 @@ export default function Hero() {
           />
           <div className={`absolute inset-0 bg-gradient-to-br ${slide.gradient}`} />
           <div className="absolute inset-0 bg-gradient-to-t from-black/40 via-transparent to-black/20" />
+          
+          {/* Urgent Alert Banner */}
+          {slide.isUrgent && (
+            <div className="absolute top-0 left-0 right-0 z-20 bg-red-600/90 backdrop-blur-sm py-3 px-4 border-b-2 border-red-400">
+              <div className="max-w-7xl mx-auto flex items-center justify-center gap-3 text-white">
+                <AlertTriangle className="w-5 h-5 animate-pulse" />
+                <span className="font-bold text-sm md:text-base tracking-wide">
+                  LIVESTOCK HEALTH EMERGENCY - QUARANTINE IN EFFECT
+                </span>
+                <AlertTriangle className="w-5 h-5 animate-pulse" />
+              </div>
+            </div>
+          )}
         </div>
       ))}
 
@@ -133,7 +158,11 @@ export default function Hero() {
       {/* Hero Content */}
       <div className="absolute inset-0 flex items-center justify-center z-20 px-4">
         <div className={`text-center text-white max-w-5xl mx-auto transform transition-all duration-1000 ${isLoaded ? "translate-y-0 opacity-100" : "translate-y-8 opacity-0"}`}>
-          <span className="inline-flex items-center px-4 py-2 bg-white/15 rounded-full border text-sm font-medium tracking-wide mb-4">
+          <span className={`inline-flex items-center px-4 py-2 rounded-full border text-sm font-medium tracking-wide mb-4 ${
+            slides[currentSlide].isUrgent 
+              ? "bg-red-600/80 border-red-400 animate-pulse" 
+              : "bg-white/15 border-white/20"
+          }`}>
             {slides[currentSlide].subtitle}
           </span>
           <h1 className="text-4xl md:text-6xl lg:text-7xl font-bold mb-6 leading-tight drop-shadow-2xl">
@@ -144,7 +173,11 @@ export default function Hero() {
           </p>
           <button
             onClick={(e) => handleButtonClick(e, slides[currentSlide])}
-            className="group inline-flex items-center px-8 py-4 bg-gradient-to-r from-orange-500 to-red-500 text-white font-semibold rounded-2xl shadow-2xl hover:scale-105 hover:-translate-y-1 transition-all duration-300 text-lg"
+            className={`group inline-flex items-center px-8 py-4 font-semibold rounded-2xl shadow-2xl hover:scale-105 hover:-translate-y-1 transition-all duration-300 text-lg ${
+              slides[currentSlide].isUrgent
+                ? "bg-gradient-to-r from-red-600 to-red-500 text-white ring-2 ring-red-400"
+                : "bg-gradient-to-r from-orange-500 to-red-500 text-white"
+            }`}
           >
             {slides[currentSlide].buttonText}
             <ChevronRight className="ml-2 w-5 h-5" />
@@ -155,9 +188,15 @@ export default function Hero() {
       {/* Slide indicators */}
       <div className="absolute bottom-8 left-1/2 -translate-x-1/2 z-30 flex flex-col items-center">
         <div className="flex items-center space-x-4 bg-white/10 rounded-full px-6 py-3 border border-white/20">
-          {slides.map((_, index) => (
+          {slides.map((slide, index) => (
             <button key={index} onClick={() => goToSlide(index)} className={`relative transition-all duration-300 ${index === currentSlide ? "scale-125" : "hover:scale-110"}`}>
-              <div className={`w-3 h-3 rounded-full transition-all duration-300 ${index === currentSlide ? "bg-orange-400 shadow-lg shadow-orange-400/50" : "bg-white/50 hover:bg-white/80"}`} />
+              <div className={`w-3 h-3 rounded-full transition-all duration-300 ${
+                index === currentSlide 
+                  ? slide.isUrgent 
+                    ? "bg-red-500 shadow-lg shadow-red-500/50" 
+                    : "bg-orange-400 shadow-lg shadow-orange-400/50"
+                  : "bg-white/50 hover:bg-white/80"
+              }`} />
             </button>
           ))}
         </div>

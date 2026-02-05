@@ -1,0 +1,441 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Committee Members - Single Page Poster</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+            background-color: #e5e7eb;
+            padding: 20px;
+        }
+
+        /* Single page container - Fixed size for A3 landscape */
+        #poster-container {
+            width: 1754px;  /* A3 landscape at 150 DPI */
+            height: 1240px;
+            margin: 0 auto;
+            background-color: #f9fafb;
+            padding: 40px;
+            transform-origin: top center;
+            position: relative;
+        }
+
+        /* Scale for screen viewing */
+        @media screen {
+            #poster-container {
+                transform: scale(0.5);
+                margin-bottom: -620px;
+            }
+        }
+
+        h2 {
+            font-size: 3rem;
+            font-weight: bold;
+            text-align: center;
+            margin-bottom: 30px;
+            background: linear-gradient(to right, #2563eb, #16a34a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 20px;
+        }
+
+        .card {
+            background-color: white;
+            border-radius: 12px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 15px;
+            text-align: center;
+            transition: all 0.3s;
+        }
+
+        .card:hover {
+            transform: scale(1.05);
+            box-shadow: 0 8px 12px rgba(0, 0, 0, 0.15);
+        }
+
+        .image-container {
+            width: 100px;
+            height: 100px;
+            margin: 0 auto 10px;
+        }
+
+        .image-wrapper {
+            position: relative;
+            width: 100%;
+            height: 100%;
+            border-radius: 50%;
+            overflow: hidden;
+            border: 3px solid white;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            outline: 2px solid #bfdbfe;
+        }
+
+        .member-image {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+
+        .initials {
+            width: 100%;
+            height: 100%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+            color: white;
+            font-size: 28px;
+            font-weight: bold;
+        }
+
+        .name {
+            font-size: 14px;
+            font-weight: bold;
+            color: #1f2937;
+            margin-bottom: 3px;
+            line-height: 1.2;
+        }
+
+        .position {
+            color: #2563eb;
+            font-weight: 600;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .description {
+            color: #4b5563;
+            font-size: 10px;
+            line-height: 1.4;
+            text-align: center;
+            border-top: 1px solid #e5e7eb;
+            padding-top: 8px;
+            margin-top: 8px;
+        }
+
+        .instructions-panel {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: white;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            max-width: 350px;
+            z-index: 999;
+        }
+
+        .instructions-panel h3 {
+            color: #1f2937;
+            margin-bottom: 15px;
+            font-size: 18px;
+        }
+
+        .instructions-panel ol {
+            margin-left: 20px;
+            line-height: 1.8;
+            color: #4b5563;
+        }
+
+        .instructions-panel li {
+            margin-bottom: 8px;
+        }
+
+        .highlight {
+            background: #fef3c7;
+            padding: 10px;
+            border-radius: 6px;
+            margin-top: 15px;
+            font-weight: 600;
+            color: #92400e;
+        }
+
+        .button-group {
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .btn {
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+            transition: all 0.3s;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #2563eb, #1d4ed8);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1d4ed8, #1e40af);
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: #e5e7eb;
+            color: #1f2937;
+        }
+
+        .btn-secondary:hover {
+            background: #d1d5db;
+        }
+
+        @media print {
+            body {
+                background: white;
+                padding: 0;
+            }
+
+            #poster-container {
+                transform: scale(1);
+                margin: 0;
+                page-break-after: avoid;
+            }
+
+            .instructions-panel {
+                display: none;
+            }
+
+            @page {
+                size: A3 landscape;
+                margin: 0;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="instructions-panel">
+        <h3>📋 How to Save as Image</h3>
+        <ol>
+            <li><strong>Windows:</strong> Press <code>Win + Shift + S</code> to open Snipping Tool</li>
+            <li>Click "Window Snip" or drag to select the poster area</li>
+            <li>Click "Save" to save as PNG</li>
+        </ol>
+        <div class="highlight">
+            💡 Or right-click anywhere on the poster and select "Save as image"
+        </div>
+        <div class="button-group">
+            <button class="btn btn-primary" onclick="window.print()">🖨️ Print to PDF</button>
+            <button class="btn btn-secondary" onclick="toggleFullscreen()">⛶ Fullscreen</button>
+        </div>
+    </div>
+
+    <div id="poster-container">
+        <h2>Committee Members</h2>
+
+        <div class="grid">
+            <!-- Member 1 -->
+            <div class="card">
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="public/images/komberes-monyatse.webp" 
+                             alt="Mr. Komberes Monyatse" 
+                             class="member-image"
+                             onerror="this.style.display='none';">
+                    </div>
+                </div>
+                <div class="name">Mr. Komberes Monyatse</div>
+                <div class="position">Chairperson</div>
+                <div class="description">Leading committee meetings and community initiatives. Experienced community leader with over 10 years of service.</div>
+            </div>
+
+            <!-- Member 2 -->
+            <div class="card">
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="public/images/sandy-botshake.webp" 
+                             alt="Miss. Sandy Botshake" 
+                             class="member-image"
+                             onerror="this.style.display='none';">
+                    </div>
+                </div>
+                <div class="name">Miss. Sandy Botshake</div>
+                <div class="position">Vice Chairperson</div>
+                <div class="description">Supporting leadership and project coordination. Active in women's development programs and youth mentorship.</div>
+            </div>
+
+            <!-- Member 3 -->
+            <div class="card">
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="public/images/violet-kaome.webp" 
+                             alt="Miss. Violet Onny Kaome" 
+                             class="member-image"
+                             onerror="this.style.display='none';">
+                    </div>
+                </div>
+                <div class="name">Miss. Violet Onny Kaome</div>
+                <div class="position">Secretary</div>
+                <div class="description">Managing records and correspondence. Handles all committee documentation and communication with government officials.</div>
+            </div>
+
+            <!-- Member 4 -->
+            <div class="card">
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="public/images/onneile-stoffel2.webp" 
+                             alt="Mrs. Onneile Lodic Stoffel" 
+                             class="member-image"
+                             onerror="this.style.display='none';">
+                    </div>
+                </div>
+                <div class="name">Mrs. Onneile Lodic Stoffel</div>
+                <div class="position">Vice Secretary</div>
+                <div class="description">Managing records and correspondence. Handles all committee documentation and communication with government officials.</div>
+            </div>
+
+            <!-- Member 5 -->
+            <div class="card">
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="public/images/kebashebile-mangate2.webp" 
+                             alt="Mrs. Kebashebile Mbinda Mangate" 
+                             class="member-image"
+                             onerror="this.style.display='none';">
+                    </div>
+                </div>
+                <div class="name">Mrs. Kebashebile Mbinda Mangate</div>
+                <div class="position">Treasurer</div>
+                <div class="description">Financial management and budget oversight. Ensures transparent handling of committee funds and project finances.</div>
+            </div>
+
+            <!-- Member 6 -->
+            <div class="card">
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="public/images/tiro-ramontsho.webp" 
+                             alt="Mr. Tiro Sylvester Ramontsho" 
+                             class="member-image"
+                             onerror="this.style.display='none';">
+                    </div>
+                </div>
+                <div class="name">Mr. Tiro Sylvester Ramontsho</div>
+                <div class="position">Additional Member</div>
+                <div class="description">Social Entrepreneurship. Youth Community Mobiliser, Youth Led Advocate. Community engagement.</div>
+            </div>
+
+            <!-- Member 7 -->
+            <div class="card">
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="public/images/vetondaje-mbaeva.webp" 
+                             alt="Ms. Vetondaje Mbaeva" 
+                             class="member-image"
+                             onerror="this.style.display='none';">
+                    </div>
+                </div>
+                <div class="name">Ms. Vetondaje Mbaeva</div>
+                <div class="position">Additional Member</div>
+                <div class="description">Women Empowerment Led initiatives.</div>
+            </div>
+
+            <!-- Member 8 -->
+            <div class="card">
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="public/images/dinah-molale.webp" 
+                             alt="Miss Dinah Molale" 
+                             class="member-image"
+                             onerror="this.style.display='none';">
+                    </div>
+                </div>
+                <div class="name">Miss Dinah Molale</div>
+                <div class="position">Additional Member</div>
+                <div class="description">Molapo Wing Representation.</div>
+            </div>
+
+            <!-- Member 9 -->
+            <div class="card">
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="public/images/golekwang-molapong.webp" 
+                             alt="Miss Molapo Golekwang" 
+                             class="member-image"
+                             onerror="this.style.display='none';">
+                    </div>
+                </div>
+                <div class="name">Miss Molapo Golekwang</div>
+                <div class="position">Additional Member</div>
+                <div class="description">Elderly Support.</div>
+            </div>
+
+            <!-- Member 10 -->
+            <div class="card">
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="public/images/social-worker.webp" 
+                             alt="Mrs. Doreen Ngakaemang" 
+                             class="member-image"
+                             onerror="this.style.display='none';">
+                    </div>
+                </div>
+                <div class="name">Mrs. Doreen Ngakaemang</div>
+                <div class="position">Social Worker</div>
+                <div class="description">Community social welfare programs and support services. Assists families and individuals with social challenges and connects them to resources.</div>
+            </div>
+
+            <!-- Member 11 -->
+            <div class="card">
+                <div class="image-container">
+                    <div class="image-wrapper">
+                        <img src="public/images/village-councillor.webp" 
+                             alt="Mr. Poifo Ditshwene" 
+                             class="member-image"
+                             onerror="this.style.display='none';">
+                    </div>
+                </div>
+                <div class="name">Mr. Poifo Ditshwene</div>
+                <div class="position">Village Councillor</div>
+                <div class="description">Government liaison and community representation. Serves as the official link between the village and district administration.</div>
+            </div>
+
+            <!-- Empty slot -->
+            <div class="card" style="visibility: hidden;"></div>
+        </div>
+    </div>
+
+    <script>
+        function toggleFullscreen() {
+            const container = document.getElementById('poster-container');
+            if (!document.fullscreenElement) {
+                container.style.transform = 'scale(1)';
+                container.style.marginBottom = '0';
+                document.documentElement.requestFullscreen();
+            } else {
+                container.style.transform = 'scale(0.5)';
+                container.style.marginBottom = '-620px';
+                document.exitFullscreen();
+            }
+        }
+
+        // Exit fullscreen handler
+        document.addEventListener('fullscreenchange', function() {
+            const container = document.getElementById('poster-container');
+            if (!document.fullscreenElement) {
+                container.style.transform = 'scale(0.5)';
+                container.style.marginBottom = '-620px';
+            }
+        });
+    </script>
+</body>
+</html>
