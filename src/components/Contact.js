@@ -92,7 +92,7 @@ export default function Contact() {
     {
       icon: Clock,
       title: 'Meeting Times',
-      content: ['Kgotla Meetings:', 'First Saturday of each month', '10:00 AM'],
+      content: ['Kgotla Meetings:', 'Ranges from 11ᵗʰ to 18ᵗʰ of each month', '10:00 AM'],
       gradient: 'from-purple-500 to-violet-600'
     },
     {
