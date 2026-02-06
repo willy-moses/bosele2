@@ -320,7 +320,7 @@ export default function Hero() {
 
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Child's Name *
+                    Child&apos;s Name *
                   </label>
                   <input
                     type="text"
@@ -384,7 +384,7 @@ export default function Hero() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Child's Age *
+                    Child&apos;s Age *
                   </label>
                   <input
                     type="number"
