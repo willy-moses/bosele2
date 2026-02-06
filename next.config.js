@@ -1,8 +1,8 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  output: 'export', // enables static export
+  // Removed 'output: export' to enable API routes
   images: {
-    unoptimized: true // disables Next.js image optimization (needed for static export)
+    unoptimized: true // keeps image optimization disabled
   }
 }
 
