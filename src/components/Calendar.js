@@ -15,6 +15,12 @@ const ChevronRight = ({ className }) => (
   </svg>
 )
 
+// Move static data outside component to prevent recreation on every render
+const upcomingEvents = [
+  { date: 'February 12, 2026', event: 'Launch of Bosele official Website and Social Platform - 10:00 AM' },
+  { date: 'February 18, 2026', event: 'Kgotla Meeting - Health Concerns: Malaria and Diarrhoea Response - Organized by Matron Modisaotsile Gombalune and VDC' },
+]
+
 export default function Calendar() {
   const [currentDate, setCurrentDate] = useState(new Date())
   const [calendarDays, setCalendarDays] = useState([])
@@ -25,15 +31,10 @@ export default function Calendar() {
   ]
   const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat']
 
-  const upcomingEvents = [
-    { date: 'February 12, 2026', event: 'Launch of Bosele official Website and Social Platform - 10:00 AM' },
-    { date: 'February 18, 2026', event: 'Kgotla Meeting - Health Concerns: Malaria and Diarrhoea Response - Organized by Matron Modisaotsile Gombalume and VDC' },
-  ]
-
-  // Use useMemo to memoize eventDays so it doesn't change on every render
+  // Now eventDays can have an empty dependency array since upcomingEvents is stable
   const eventDays = useMemo(() => 
     upcomingEvents.map(e => new Date(e.date).getDate()),
-    [] // Empty dependency array since upcomingEvents is static
+    []
   )
 
   useEffect(() => {
