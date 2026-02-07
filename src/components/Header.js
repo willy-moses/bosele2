@@ -1,7 +1,7 @@
 'use client'
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
-
+import { useSession } from 'next-auth/react'
 
 // SVG Icons
 const MenuIcon = ({ className }) => (
@@ -13,6 +13,12 @@ const MenuIcon = ({ className }) => (
 const CloseIcon = ({ className }) => (
   <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
     <path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" />
+  </svg>
+)
+
+const BellIcon = ({ className }) => (
+  <svg className={className} fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2}>
+    <path strokeLinecap="round" strokeLinejoin="round" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
   </svg>
 )
 
@@ -75,6 +81,8 @@ export default function Header() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
   const [isScrolled, setIsScrolled] = useState(false)
   const [activeSection, setActiveSection] = useState('home')
+  const [unreadCount, setUnreadCount] = useState(0)
+  const { data: session } = useSession()
 
   // Prevent body scroll when mobile menu is open
   useEffect(() => {
@@ -84,7 +92,6 @@ export default function Header() {
       document.body.style.overflow = 'unset'
     }
 
-    // Cleanup function
     return () => {
       document.body.style.overflow = 'unset'
     }
@@ -109,6 +116,24 @@ export default function Header() {
     handleScroll()
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
+
+  // Fetch unread messages count
+  useEffect(() => {
+    // Fetch unread count for everyone (not just logged-in users)
+    fetchUnreadCount()
+    const interval = setInterval(fetchUnreadCount, 30000) // Refresh every 30 seconds
+    return () => clearInterval(interval)
+  }, [])
+
+  const fetchUnreadCount = async () => {
+    try {
+      const res = await fetch('/api/contact/messages/unread-count')
+      const data = await res.json()
+      setUnreadCount(data.count || 0)
+    } catch (error) {
+      console.error('Failed to fetch unread count:', error)
+    }
+  }
 
   const handleNavClick = (href) => {
     setMobileMenuOpen(false)
@@ -148,8 +173,51 @@ export default function Header() {
             </div>
           </div>
 
-          {/* Social Links - Desktop */}
-          <div className="hidden lg:flex items-center space-x-2">
+          {/* Staff Portal Button & Social Links - Desktop */}
+          <div className="hidden lg:flex items-center space-x-3">
+            {/* Bell Icon for Messages/Notifications */}
+            <a
+              href="/dashboard/messages"
+              className="group relative w-12 h-12 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+              title="Messages"
+            >
+              <BellIcon className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse shadow-lg">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+              <div 
+                className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{ background: 'linear-gradient(135deg, #1877F220, #1877F210)' }}
+              ></div>
+            </a>
+
+            {/* Staff Portal Login Button */}
+            <a
+              href="/auth/login"
+              className="group relative px-5 py-2.5 bg-white/10 backdrop-blur-sm rounded-xl flex items-center gap-2 text-white font-medium hover:bg-white/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+              title="Staff Portal Login"
+            >
+              <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+              </svg>
+              <span className="text-sm">🔐 Staff Portal</span>
+              {unreadCount > 0 && (
+                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse shadow-lg">
+                  {unreadCount > 9 ? '9+' : unreadCount}
+                </span>
+              )}
+              <div 
+                className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                style={{ background: 'linear-gradient(135deg, #059669220, #05966910)' }}
+              ></div>
+            </a>
+
+            {/* Divider */}
+            <div className="w-px h-8 bg-white/20"></div>
+
+            {/* Social Links */}
             {socialLinks.map((social) => {
               const IconComponent = social.icon
               return (
@@ -162,9 +230,10 @@ export default function Header() {
                   rel="noopener noreferrer"
                 >
                   <IconComponent className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
-                  <div className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                       style={{ background: `linear-gradient(135deg, ${social.color}20, ${social.color}10)` }}>
-                  </div>
+                  <div 
+                    className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{ background: `linear-gradient(135deg, ${social.color}20, ${social.color}10)` }}
+                  ></div>
                 </a>
               )
             })}
@@ -175,6 +244,8 @@ export default function Header() {
             type="button"
             className="lg:hidden relative z-10 p-3 rounded-xl bg-white/10 backdrop-blur-sm text-white hover:bg-white/20 transition-all duration-300 hover:scale-105"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+            aria-label="Toggle mobile menu"
+            aria-expanded={mobileMenuOpen}
           >
             <div className="relative w-6 h-6">
               <MenuIcon className={`absolute inset-0 transition-all duration-300 ${mobileMenuOpen ? 'opacity-0 rotate-45' : 'opacity-100 rotate-0'}`} />
@@ -223,6 +294,40 @@ export default function Header() {
       }`}>
         <div className="h-full bg-emerald-900/95 backdrop-blur-md border-t border-white/20 overflow-y-auto">
           <nav className="max-w-7xl mx-auto px-4 py-6">
+            {/* Buttons Row - Mobile */}
+            <div className="flex gap-3 mb-6">
+              {/* Bell Icon for Messages - Mobile */}
+              <a
+                href="/dashboard/messages"
+                className="relative w-14 h-14 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 shadow-lg"
+                title="Messages"
+              >
+                <BellIcon className="w-6 h-6" />
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center animate-pulse">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </a>
+
+              {/* Staff Portal Login Button - Mobile */}
+              <a
+                href="/auth/login"
+                className="relative flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white/10 backdrop-blur-sm rounded-xl text-white font-medium hover:bg-white/20 transition-all duration-300 shadow-lg"
+                title="Staff Portal Login"
+              >
+                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+                <span className="text-sm">🔐 Staff Portal</span>
+                {unreadCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center animate-pulse">
+                    {unreadCount > 9 ? '9+' : unreadCount}
+                  </span>
+                )}
+              </a>
+            </div>
+
             <ul className="space-y-2">
               {navigation.map((item, index) => {
                 const isActive = activeSection === item.href.substring(1)

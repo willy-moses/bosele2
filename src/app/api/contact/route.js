@@ -1,6 +1,9 @@
-export const runtime = 'edge'; // or 'nodejs'
 import { NextResponse } from 'next/server'
-import { sql } from '@vercel/postgres'
+import { createClient } from '@supabase/supabase-js'
+
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+const supabase = createClient(supabaseUrl, supabaseKey)
 
 export async function POST(request) {
   try {
@@ -8,6 +11,7 @@ export async function POST(request) {
 
     const { firstName, lastName, email, phone, subject, message } = body
 
+    // Validate required fields
     if (!firstName || !lastName || !email || !subject || !message) {
       return NextResponse.json(
         { error: 'All required fields must be filled' },
@@ -24,14 +28,37 @@ export async function POST(request) {
       )
     }
 
-    const result = await sql`
-      INSERT INTO contact_messages (first_name, last_name, email, phone, subject, message, status)
-      VALUES (${firstName}, ${lastName}, ${email}, ${phone || ''}, ${subject}, ${message}, 'unread')
-      RETURNING id
-    `
+    // Insert into Supabase
+    const { data, error } = await supabase
+      .from('contact_messages')
+      .insert([
+        {
+          first_name: firstName,
+          last_name: lastName,
+          email: email,
+          phone: phone || '',
+          subject: subject,
+          message: message,
+          status: 'unread',
+          created_at: new Date().toISOString()
+        }
+      ])
+      .select()
+
+    if (error) {
+      console.error('Supabase error:', error)
+      return NextResponse.json(
+        { error: 'Failed to send message' },
+        { status: 500 }
+      )
+    }
 
     return NextResponse.json(
-      { success: true, id: result.rows[0].id, message: 'Message sent successfully' },
+      { 
+        success: true, 
+        id: data[0].id, 
+        message: 'Message sent successfully' 
+      },
       { status: 201 }
     )
 
