@@ -5,7 +5,28 @@ export const USER_ROLES = {
 }
 
 export const ROLE_PERMISSIONS = {
-  ADMIN: ['read', 'write', 'delete', 'manage_users'],
-  EDITOR: ['read', 'write'],
-  VIEWER: ['read']
+  ADMIN: {
+    description: 'Full system access and user management',
+    canManageUsers: true,
+    canManageContent: true,
+    canViewReports: true,
+    canManageSettings: true,
+    canDelete: true
+  },
+  EDITOR: {
+    description: 'Can create and edit content',
+    canManageUsers: false,
+    canManageContent: true,
+    canViewReports: true,
+    canManageSettings: false,
+    canDelete: false
+  },
+  VIEWER: {
+    description: 'Read-only access to content',
+    canManageUsers: false,
+    canManageContent: false,
+    canViewReports: true,
+    canManageSettings: false,
+    canDelete: false
+  }
 }

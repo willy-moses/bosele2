@@ -1,13 +1,67 @@
 'use client'
 import { signOut } from 'next-auth/react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import UserManagement from './UserManagement'
 import RegistrationsManagement from './RegistrationsManagement'
 import MessagesManagement from './MessagesManagement'
 
-export default function StaffDashboard({ user }) {
-  const [activeTab, setActiveTab] = useState('overview')
 
+
+export default function StaffDashboard({ user }) {
+  
+  const [activeTab, setActiveTab] = useState('overview')
+  const [notificationCount, setNotificationCount] = useState(0)
+  const [contactNotifications, setContactNotifications] = useState(0)
+  const [registrationNotifications, setRegistrationNotifications] = useState(0)
+
+  // Debug logging
+  console.log('👤 Current user:', user)
+  console.log('👤 User role:', user.role)
+  console.log('👤 Role uppercase:', user.role?.toUpperCase())
+  console.log('👤 Is ADMIN?:', user.role?.toUpperCase() === 'ADMIN')
+
+  useEffect(() => {
+    fetchNotificationCount()
+    
+    // Listen for notification updates
+    const handleNotificationUpdate = () => {
+      fetchNotificationCount()
+    }
+    
+    window.addEventListener('notificationUpdate', handleNotificationUpdate)
+    
+    return () => {
+      window.removeEventListener('notificationUpdate', handleNotificationUpdate)
+    }
+  }, [])
+
+  const fetchNotificationCount = async () => {
+    try {
+      console.log('📊 Fetching notification count...')
+      const res = await fetch('/api/notifications/count')
+      const data = await res.json()
+      
+      setNotificationCount(data.count || 0)
+      setContactNotifications(data.contactCount || 0)
+      setRegistrationNotifications(data.registrationCount || 0)
+      
+      console.log('📊 Updated notification counts:', {
+        total: data.count || 0,
+        contact: data.contactCount || 0,
+        registration: data.registrationCount || 0
+      })
+    } catch (error) {
+      console.error('Error fetching notification count:', error)
+    }
+  }
+
+  // Check if user is admin (case-insensitive)
+  const isAdmin = user.role?.toUpperCase() === 'ADMIN'
+  
+  console.log('🔴 Contact Notifications State:', contactNotifications)
+  console.log('🔴 Registration Notifications State:', registrationNotifications)
+  console.log('🔔 Total Notification Count:', notificationCount)
+  
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
@@ -19,6 +73,20 @@ export default function StaffDashboard({ user }) {
               <p className="text-sm text-gray-600">Welcome, {user.name}</p>
             </div>
             <div className="flex items-center gap-4">
+              {/* Notification Bell */}
+              <div className="relative">
+                <button className="relative p-2 text-gray-600 hover:text-gray-900">
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                  </svg>
+                  {notificationCount > 0 && (
+                    <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {notificationCount}
+                    </span>
+                  )}
+                </button>
+              </div>
+              
               <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-sm font-medium">
                 {user.role}
               </span>
@@ -37,19 +105,39 @@ export default function StaffDashboard({ user }) {
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-8">
-            {['overview', 'registrations', 'messages', 'users', 'content', 'settings'].map((tab) => (
-              <button
-                key={tab}
-                onClick={() => setActiveTab(tab)}
-                className={`py-4 px-1 border-b-2 font-medium text-sm ${
-                  activeTab === tab
-                    ? 'border-emerald-500 text-emerald-600'
-                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
-                }`}
-              >
-                {tab.charAt(0).toUpperCase() + tab.slice(1)}
-              </button>
-            ))}
+            {['overview', 'registrations', 'messages', 'users', 'content', 'settings'].map((tab) => {
+              // Determine notification count for each tab
+              let tabNotificationCount = 0
+              
+              if (tab === 'registrations') {
+                tabNotificationCount = registrationNotifications
+                console.log('🔵 Registrations Tab - Rendering with count:', registrationNotifications)
+              } else if (tab === 'messages') {
+                tabNotificationCount = contactNotifications
+                console.log('🔵 Messages Tab - Rendering with count:', contactNotifications)
+              }
+
+              return (
+                <button
+                  key={tab}
+                  onClick={() => setActiveTab(tab)}
+                  className={`py-4 px-1 border-b-2 font-medium text-sm relative ${
+                    activeTab === tab
+                      ? 'border-emerald-500 text-emerald-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                  }`}
+                >
+                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  
+                  {/* Show notification badge with count */}
+                  {tabNotificationCount > 0 && (
+                    <span className="absolute -top-1 -right-3 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {tabNotificationCount}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
           </nav>
         </div>
       </div>
@@ -66,9 +154,15 @@ export default function StaffDashboard({ user }) {
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Active Sessions</h3>
               <p className="text-3xl font-bold text-blue-600">1</p>
             </div>
-            <div className="bg-white p-6 rounded-lg shadow">
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Pending Tasks</h3>
-              <p className="text-3xl font-bold text-orange-600">0</p>
+            <div className="bg-white p-6 rounded-lg shadow relative">
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">Unread Notifications</h3>
+              <p className="text-3xl font-bold text-orange-600">{notificationCount}</p>
+              {notificationCount > 0 && (
+                <span className="absolute top-4 right-4 flex h-3 w-3">
+                  <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75"></span>
+                  <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500"></span>
+                </span>
+              )}
             </div>
           </div>
         )}
@@ -81,13 +175,14 @@ export default function StaffDashboard({ user }) {
           <MessagesManagement />
         )}
 
-        {activeTab === 'users' && user.role === 'ADMIN' && (
+        {activeTab === 'users' && isAdmin && (
           <UserManagement />
         )}
 
-        {activeTab === 'users' && user.role !== 'ADMIN' && (
+        {activeTab === 'users' && !isAdmin && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-yellow-800">You don't have permission to manage users.</p>
+            <p className="text-yellow-800">You don't have permission to manage users. Only ADMIN users can access this section.</p>
+            <p className="text-sm text-yellow-700 mt-2">Your current role: <span className="font-semibold">{user.role}</span></p>
           </div>
         )}
 

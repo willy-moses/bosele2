@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react'
 import Image from 'next/image'
 import { useSession } from 'next-auth/react'
+import Link from 'next/link'
 
 // SVG Icons
 const MenuIcon = ({ className }) => (
@@ -117,23 +118,27 @@ export default function Header() {
     return () => window.removeEventListener('scroll', handleScroll)
   }, [])
 
-  // Fetch unread messages count
+  // Fetch unread notifications count from notifications table
   useEffect(() => {
-    // Fetch unread count for everyone (not just logged-in users)
     fetchUnreadCount()
     const interval = setInterval(fetchUnreadCount, 30000) // Refresh every 30 seconds
     return () => clearInterval(interval)
   }, [])
 
-  const fetchUnreadCount = async () => {
-    try {
-      const res = await fetch('/api/contact/messages/unread-count')
-      const data = await res.json()
-      setUnreadCount(data.count || 0)
-    } catch (error) {
-      console.error('Failed to fetch unread count:', error)
-    }
+ const fetchUnreadCount = async () => {
+  try {
+    console.log('📊 Calling notification count API...')
+    const res = await fetch('/api/notifications/count')
+    const data = await res.json()
+    
+    console.log('📊 Notification response:', data)
+    
+    // Updated to use 'count' instead of 'unreadCount'
+    setUnreadCount(data.count || 0)
+  } catch (error) {
+    console.error('Failed to fetch unread count:', error)
   }
+}
 
   const handleNavClick = (href) => {
     setMobileMenuOpen(false)
@@ -141,6 +146,16 @@ export default function Header() {
     if (element) {
       element.scrollIntoView({ behavior: 'smooth' })
     }
+  }
+
+  // Handle bell click - different behavior for logged in vs logged out
+  const handleBellClick = (e) => {
+    if (session) {
+      // If logged in, trigger custom event for dashboard to show notifications
+      e.preventDefault()
+      window.dispatchEvent(new CustomEvent('showNotifications'))
+    }
+    // If logged out, the Link will naturally navigate to /auth/login
   }
 
   return (
@@ -175,11 +190,12 @@ export default function Header() {
 
           {/* Staff Portal Button & Social Links - Desktop */}
           <div className="hidden lg:flex items-center space-x-3">
-            {/* Bell Icon for Messages/Notifications */}
-            <a
-              href="/dashboard/messages"
+            {/* Bell Icon for Notifications */}
+            <Link
+              href={session ? '#' : '/auth/login'}
+              onClick={handleBellClick}
               className="group relative w-12 h-12 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-              title="Messages"
+              title={session ? "View notifications" : "Login to view notifications"}
             >
               <BellIcon className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" />
               {unreadCount > 0 && (
@@ -189,30 +205,42 @@ export default function Header() {
               )}
               <div 
                 className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                style={{ background: 'linear-gradient(135deg, #1877F220, #1877F210)' }}
+                style={{ background: 'linear-gradient(135deg, #EF444420, #EF444410)' }}
               ></div>
-            </a>
+            </Link>
 
             {/* Staff Portal Login Button */}
-            <a
-              href="/auth/login"
-              className="group relative px-5 py-2.5 bg-white/10 backdrop-blur-sm rounded-xl flex items-center gap-2 text-white font-medium hover:bg-white/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
-              title="Staff Portal Login"
-            >
-              <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-              </svg>
-              <span className="text-sm">🔐 Staff Portal</span>
-              {unreadCount > 0 && (
-                <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center animate-pulse shadow-lg">
-                  {unreadCount > 9 ? '9+' : unreadCount}
+            {!session && (
+              <Link
+                href="/auth/login"
+                className="group relative px-5 py-2.5 bg-white/10 backdrop-blur-sm rounded-xl flex items-center gap-2 text-white font-medium hover:bg-white/20 transition-all duration-300 hover:-translate-y-1 hover:shadow-lg"
+                title="Staff Portal Login"
+              >
+                <svg className="w-5 h-5 transition-transform duration-300 group-hover:scale-110" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                </svg>
+                <span className="text-sm">🔐 Staff Portal</span>
+                <div 
+                  className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
+                  style={{ background: 'linear-gradient(135deg, #059669220, #05966910)' }}
+                ></div>
+              </Link>
+            )}
+
+            {/* If logged in, show user info */}
+            {session && (
+              <div className="flex items-center gap-3">
+                <span className="px-3 py-1 bg-white/20 text-white rounded-lg text-sm font-medium">
+                  {session.user.name}
                 </span>
-              )}
-              <div 
-                className="absolute inset-0 rounded-xl opacity-0 group-hover:opacity-100 transition-opacity duration-300"
-                style={{ background: 'linear-gradient(135deg, #059669220, #05966910)' }}
-              ></div>
-            </a>
+                <Link
+                  href="/dashboard"
+                  className="px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors text-sm font-medium"
+                >
+                  Dashboard
+                </Link>
+              </div>
+            )}
 
             {/* Divider */}
             <div className="w-px h-8 bg-white/20"></div>
@@ -296,11 +324,12 @@ export default function Header() {
           <nav className="max-w-7xl mx-auto px-4 py-6">
             {/* Buttons Row - Mobile */}
             <div className="flex gap-3 mb-6">
-              {/* Bell Icon for Messages - Mobile */}
-              <a
-                href="/dashboard/messages"
+              {/* Bell Icon for Notifications - Mobile */}
+              <Link
+                href={session ? '#' : '/auth/login'}
+                onClick={handleBellClick}
                 className="relative w-14 h-14 bg-white/10 backdrop-blur-sm rounded-xl flex items-center justify-center text-white hover:bg-white/20 transition-all duration-300 shadow-lg"
-                title="Messages"
+                title={session ? "View notifications" : "Login to view notifications"}
               >
                 <BellIcon className="w-6 h-6" />
                 {unreadCount > 0 && (
@@ -308,24 +337,28 @@ export default function Header() {
                     {unreadCount > 9 ? '9+' : unreadCount}
                   </span>
                 )}
-              </a>
+              </Link>
 
-              {/* Staff Portal Login Button - Mobile */}
-              <a
-                href="/auth/login"
-                className="relative flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white/10 backdrop-blur-sm rounded-xl text-white font-medium hover:bg-white/20 transition-all duration-300 shadow-lg"
-                title="Staff Portal Login"
-              >
-                <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
-                </svg>
-                <span className="text-sm">🔐 Staff Portal</span>
-                {unreadCount > 0 && (
-                  <span className="absolute -top-1 -right-1 bg-red-500 text-white text-xs font-bold rounded-full w-6 h-6 flex items-center justify-center animate-pulse">
-                    {unreadCount > 9 ? '9+' : unreadCount}
-                  </span>
-                )}
-              </a>
+              {/* Staff Portal Login or Dashboard Button - Mobile */}
+              {!session ? (
+                <Link
+                  href="/auth/login"
+                  className="relative flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-white/10 backdrop-blur-sm rounded-xl text-white font-medium hover:bg-white/20 transition-all duration-300 shadow-lg"
+                  title="Staff Portal Login"
+                >
+                  <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24" strokeWidth={2.5}>
+                    <path strokeLinecap="round" strokeLinejoin="round" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
+                  </svg>
+                  <span className="text-sm">🔐 Staff Portal</span>
+                </Link>
+              ) : (
+                <Link
+                  href="/dashboard"
+                  className="relative flex-1 flex items-center justify-center gap-2 px-4 py-3 bg-emerald-600 rounded-xl text-white font-medium hover:bg-emerald-700 transition-all duration-300 shadow-lg"
+                >
+                  <span className="text-sm">📊 Dashboard</span>
+                </Link>
+              )}
             </div>
 
             <ul className="space-y-2">

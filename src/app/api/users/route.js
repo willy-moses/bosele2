@@ -1,45 +1,56 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
-import { authOptions } from '@/lib/auth' // ✅ Changed from '../auth/[...nextauth]/route'
-import { createClient } from '@supabase/supabase-js'
+import { authOptions } from '@/lib/auth'
+import { getSupabaseAdmin } from '@/lib/supabase-server'
 import bcrypt from 'bcryptjs'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY // Use service role key for admin operations
-const supabase = createClient(supabaseUrl, supabaseKey)
 
 // GET - Fetch all users
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized - Admin access required' },
-        { status: 403 }
-      )
+    console.log('👤 Session:', session)
+    console.log('👤 User role:', session?.user?.role)
+    
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    // Check if user is admin (case-insensitive)
+    const isAdmin = session.user.role?.toUpperCase() === 'ADMIN'
+    
+    if (!isAdmin) {
+      return NextResponse.json({ 
+        success: false,
+        error: 'Unauthorized - Admin access required' 
+      }, { status: 403 })
+    }
+
+    const supabase = getSupabaseAdmin()
+    
     const { data: users, error } = await supabase
       .from('staff_users')
       .select('id, name, email, role, department, status, lastLogin, createdAt')
       .order('createdAt', { ascending: false })
 
     if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json(
-        { success: false, error: 'Failed to fetch users' },
-        { status: 500 }
-      )
+      console.error('❌ Error fetching users:', error)
+      return NextResponse.json({ 
+        success: false,
+        error: 'Failed to fetch users' 
+      }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true, users })
+    return NextResponse.json({ 
+      success: true,
+      users: users || [] 
+    })
   } catch (error) {
-    console.error('Error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    )
+    console.error('❌ Error in GET /api/users:', error)
+    return NextResponse.json({ 
+      success: false,
+      error: error.message 
+    }, { status: 500 })
   }
 }
 
@@ -48,149 +59,145 @@ export async function POST(request) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized - Admin access required' },
-        { status: 403 }
-      )
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { name, email, password, role, department } = body
+    // Check if user is admin (case-insensitive)
+    const isAdmin = session.user.role?.toUpperCase() === 'ADMIN'
+    
+    if (!isAdmin) {
+      return NextResponse.json({ 
+        success: false,
+        error: 'Unauthorized - Admin access required' 
+      }, { status: 403 })
+    }
+
+    const { name, email, role, department, password } = await request.json()
 
     // Validation
-    if (!name || !email || !password) {
-      return NextResponse.json(
-        { success: false, error: 'Name, email, and password are required' },
-        { status: 400 }
-      )
+    if (!name || !email || !password || !department) {
+      return NextResponse.json({ 
+        success: false,
+        error: 'All fields are required' 
+      }, { status: 400 })
     }
 
-    if (password.length < 6) {
-      return NextResponse.json(
-        { success: false, error: 'Password must be at least 6 characters' },
-        { status: 400 }
-      )
-    }
+    const supabase = getSupabaseAdmin()
 
     // Check if user already exists
     const { data: existingUser } = await supabase
       .from('staff_users')
       .select('id')
-      .eq('email', email.toLowerCase())
+      .eq('email', email)
       .single()
 
     if (existingUser) {
-      return NextResponse.json(
-        { success: false, error: 'User with this email already exists' },
-        { status: 400 }
-      )
+      return NextResponse.json({ 
+        success: false,
+        error: 'User with this email already exists' 
+      }, { status: 400 })
     }
 
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10)
 
-    // Create user
+    // Create user with username derived from email
+    const username = email.split('@')[0]
+
     const { data: newUser, error } = await supabase
       .from('staff_users')
-      .insert([
-        {
-          name,
-          username: email.split('@')[0], // Generate username from email
-          email: email.toLowerCase(),
-          password: hashedPassword,
-          role: role || 'STAFF',
-          department: department || null,
-          status: 'active',
-        },
-      ])
+      .insert([{
+        name,
+        email,
+        username,
+        password: hashedPassword,
+        role: role || 'VIEWER',
+        department,
+        status: 'active'
+      }])
       .select()
       .single()
 
     if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json(
-        { success: false, error: 'Failed to create user' },
-        { status: 500 }
-      )
+      console.error('❌ Error creating user:', error)
+      return NextResponse.json({ 
+        success: false,
+        error: 'Failed to create user' 
+      }, { status: 500 })
     }
 
-    return NextResponse.json({
+    return NextResponse.json({ 
       success: true,
-      user: {
-        id: newUser.id,
-        name: newUser.name,
-        email: newUser.email,
-        role: newUser.role,
-      },
+      user: newUser 
     })
   } catch (error) {
-    console.error('Error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    )
+    console.error('❌ Error in POST /api/users:', error)
+    return NextResponse.json({ 
+      success: false,
+      error: error.message 
+    }, { status: 500 })
   }
 }
 
-// PATCH - Update user role
+// PATCH - Update user
 export async function PATCH(request) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized - Admin access required' },
-        { status: 403 }
-      )
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const body = await request.json()
-    const { userId, role, status, department } = body
+    // Check if user is admin (case-insensitive)
+    const isAdmin = session.user.role?.toUpperCase() === 'ADMIN'
+    
+    if (!isAdmin) {
+      return NextResponse.json({ 
+        success: false,
+        error: 'Unauthorized - Admin access required' 
+      }, { status: 403 })
+    }
+
+    const { userId, ...updates } = await request.json()
 
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'User ID is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ 
+        success: false,
+        error: 'User ID is required' 
+      }, { status: 400 })
     }
 
-    // Build update object with only provided fields
-    const updates = {}
-    if (role) {
-      if (!['STAFF', 'ADMIN', 'viewer', 'editor', 'admin'].includes(role)) {
-        return NextResponse.json(
-          { success: false, error: 'Invalid role' },
-          { status: 400 }
-        )
-      }
-      updates.role = role
-    }
-    if (status) updates.status = status
-    if (department !== undefined) updates.department = department
+    const supabase = getSupabaseAdmin()
 
-    const { data, error } = await supabase
+    const { data: updatedUser, error } = await supabase
       .from('staff_users')
-      .update(updates)
+      .update({
+        ...updates,
+        updatedAt: new Date().toISOString()
+      })
       .eq('id', userId)
       .select()
       .single()
 
     if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json(
-        { success: false, error: 'Failed to update user' },
-        { status: 500 }
-      )
+      console.error('❌ Error updating user:', error)
+      return NextResponse.json({ 
+        success: false,
+        error: 'Failed to update user' 
+      }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true, user: data })
+    return NextResponse.json({ 
+      success: true,
+      user: updatedUser 
+    })
   } catch (error) {
-    console.error('Error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    )
+    console.error('❌ Error in PATCH /api/users:', error)
+    return NextResponse.json({ 
+      success: false,
+      error: error.message 
+    }, { status: 500 })
   }
 }
 
@@ -199,30 +206,39 @@ export async function DELETE(request) {
   try {
     const session = await getServerSession(authOptions)
     
-    if (!session || session.user.role !== 'ADMIN') {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized - Admin access required' },
-        { status: 403 }
-      )
+    if (!session) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    // Check if user is admin (case-insensitive)
+    const isAdmin = session.user.role?.toUpperCase() === 'ADMIN'
+    
+    if (!isAdmin) {
+      return NextResponse.json({ 
+        success: false,
+        error: 'Unauthorized - Admin access required' 
+      }, { status: 403 })
     }
 
     const { searchParams } = new URL(request.url)
     const userId = searchParams.get('id')
 
     if (!userId) {
-      return NextResponse.json(
-        { success: false, error: 'User ID is required' },
-        { status: 400 }
-      )
+      return NextResponse.json({ 
+        success: false,
+        error: 'User ID is required' 
+      }, { status: 400 })
     }
 
     // Prevent deleting yourself
     if (userId === session.user.id) {
-      return NextResponse.json(
-        { success: false, error: 'You cannot delete your own account' },
-        { status: 400 }
-      )
+      return NextResponse.json({ 
+        success: false,
+        error: 'You cannot delete your own account' 
+      }, { status: 400 })
     }
+
+    const supabase = getSupabaseAdmin()
 
     const { error } = await supabase
       .from('staff_users')
@@ -230,19 +246,21 @@ export async function DELETE(request) {
       .eq('id', userId)
 
     if (error) {
-      console.error('Supabase error:', error)
-      return NextResponse.json(
-        { success: false, error: 'Failed to delete user' },
-        { status: 500 }
-      )
+      console.error('❌ Error deleting user:', error)
+      return NextResponse.json({ 
+        success: false,
+        error: 'Failed to delete user' 
+      }, { status: 500 })
     }
 
-    return NextResponse.json({ success: true })
+    return NextResponse.json({ 
+      success: true 
+    })
   } catch (error) {
-    console.error('Error:', error)
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    )
+    console.error('❌ Error in DELETE /api/users:', error)
+    return NextResponse.json({ 
+      success: false,
+      error: error.message 
+    }, { status: 500 })
   }
 }

@@ -5,7 +5,6 @@ import Image from "next/image"
 import { ChevronLeft, ChevronRight, Play, Pause, ArrowDown, AlertTriangle, X } from "lucide-react"
 
 const slides = [
-  
   {
     image: "/images/kgt.webp",
     title: "Welcome to Bosele Kgotla",
@@ -69,13 +68,48 @@ export default function Hero() {
   const [isLoaded, setIsLoaded] = useState(false)
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [formData, setFormData] = useState({
-    parentName: '',
-    childName: '',
-    email: '',
-    phone: '',
-    address: '',
-    childAge: '',
-    startDate: '',
+    // Child Details
+    childSurname: '',
+    childFirstName: '',
+    childNickname: '',
+    childGender: '',
+    childDobDay: '',
+    childDobMonth: '',
+    childDobYear: '',
+    residentialAddress: '',
+    postalAddress: '',
+    
+    // Mother Details
+    motherSurname: '',
+    motherFirstName: '',
+    motherTelephoneHome: '',
+    motherWorkplace: '',
+    motherTelephoneWork: '',
+    motherWorkHours: '',
+    motherCellphone: '',
+    motherEmail: '',
+    
+    // Father Details
+    fatherSurname: '',
+    fatherFirstName: '',
+    fatherTelephoneHome: '',
+    fatherWorkplace: '',
+    fatherTelephoneWork: '',
+    fatherWorkHours: '',
+    fatherCellphone: '',
+    fatherEmail: '',
+    
+    // Emergency Contact
+    emergencyName: '',
+    emergencyAddress: '',
+    emergencyTelephone: '',
+    emergencyCellphone: '',
+    
+    // Additional Information
+    hasMedicineAllergies: '',
+    medicineAllergiesDetails: '',
+    hasFoodAllergies: '',
+    foodAllergiesDetails: '',
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [message, setMessage] = useState({ type: '', text: '' })
@@ -120,7 +154,8 @@ export default function Hero() {
   }
 
   const handleFormChange = (e) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value })
+    const { name, value } = e.target
+    setFormData({ ...formData, [name]: value })
   }
 
   const handleFormSubmit = async (e) => {
@@ -129,33 +164,140 @@ export default function Hero() {
     setMessage({ type: '', text: '' })
 
     try {
+      // Calculate child age from DOB
+      const birthDate = new Date(
+        parseInt(formData.childDobYear),
+        parseInt(formData.childDobMonth) - 1,
+        parseInt(formData.childDobDay)
+      )
+      const today = new Date()
+      let age = today.getFullYear() - birthDate.getFullYear()
+      const monthDiff = today.getMonth() - birthDate.getMonth()
+      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+        age--
+      }
+
+      // Format start date as the first day of next month
+      const nextMonth = new Date()
+      nextMonth.setMonth(nextMonth.getMonth() + 1)
+      nextMonth.setDate(1)
+
+      // Prepare data for API (matching registrations table structure)
+      const apiData = {
+        parent_name: `${formData.motherFirstName || formData.fatherFirstName} ${formData.motherSurname || formData.fatherSurname}`.trim(),
+        child_name: `${formData.childFirstName} ${formData.childSurname}`.trim(),
+        email: formData.motherEmail || formData.fatherEmail || '',
+        phone: formData.motherCellphone || formData.fatherCellphone || formData.emergencyTelephone || '',
+        address: formData.residentialAddress,
+        child_age: age,
+        start_date: nextMonth.toISOString().split('T')[0],
+        // Store all additional data in additional_data field
+        additional_data: {
+          child: {
+            surname: formData.childSurname,
+            firstName: formData.childFirstName,
+            nickname: formData.childNickname,
+            gender: formData.childGender,
+            dob: {
+              day: formData.childDobDay,
+              month: formData.childDobMonth,
+              year: formData.childDobYear
+            }
+          },
+          mother: {
+            surname: formData.motherSurname,
+            firstName: formData.motherFirstName,
+            telephoneHome: formData.motherTelephoneHome,
+            workplace: formData.motherWorkplace,
+            telephoneWork: formData.motherTelephoneWork,
+            workHours: formData.motherWorkHours,
+            cellphone: formData.motherCellphone,
+            email: formData.motherEmail
+          },
+          father: {
+            surname: formData.fatherSurname,
+            firstName: formData.fatherFirstName,
+            telephoneHome: formData.fatherTelephoneHome,
+            workplace: formData.fatherWorkplace,
+            telephoneWork: formData.fatherTelephoneWork,
+            workHours: formData.fatherWorkHours,
+            cellphone: formData.fatherCellphone,
+            email: formData.fatherEmail
+          },
+          emergency: {
+            name: formData.emergencyName,
+            address: formData.emergencyAddress,
+            telephone: formData.emergencyTelephone,
+            cellphone: formData.emergencyCellphone
+          },
+          medical: {
+            hasMedicineAllergies: formData.hasMedicineAllergies,
+            medicineAllergiesDetails: formData.medicineAllergiesDetails,
+            hasFoodAllergies: formData.hasFoodAllergies,
+            foodAllergiesDetails: formData.foodAllergiesDetails
+          },
+          postalAddress: formData.postalAddress
+        }
+      }
+
+      console.log('📤 Submitting registration data:', apiData)
+
       const response = await fetch('/api/register', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(apiData),
       })
 
       const data = await response.json()
 
       if (response.ok) {
         setMessage({ type: 'success', text: 'Application submitted successfully! We will contact you soon.' })
-        setFormData({
-          parentName: '',
-          childName: '',
-          email: '',
-          phone: '',
-          address: '',
-          childAge: '',
-          startDate: '',
-        })
+        // Reset form after successful submission
         setTimeout(() => {
+          setFormData({
+            childSurname: '',
+            childFirstName: '',
+            childNickname: '',
+            childGender: '',
+            childDobDay: '',
+            childDobMonth: '',
+            childDobYear: '',
+            residentialAddress: '',
+            postalAddress: '',
+            motherSurname: '',
+            motherFirstName: '',
+            motherTelephoneHome: '',
+            motherWorkplace: '',
+            motherTelephoneWork: '',
+            motherWorkHours: '',
+            motherCellphone: '',
+            motherEmail: '',
+            fatherSurname: '',
+            fatherFirstName: '',
+            fatherTelephoneHome: '',
+            fatherWorkplace: '',
+            fatherTelephoneWork: '',
+            fatherWorkHours: '',
+            fatherCellphone: '',
+            fatherEmail: '',
+            emergencyName: '',
+            emergencyAddress: '',
+            emergencyTelephone: '',
+            emergencyCellphone: '',
+            hasMedicineAllergies: '',
+            medicineAllergiesDetails: '',
+            hasFoodAllergies: '',
+            foodAllergiesDetails: '',
+          })
           setIsFormOpen(false)
           setMessage({ type: '', text: '' })
         }, 3000)
       } else {
+        console.error('❌ Registration failed:', data)
         setMessage({ type: 'error', text: data.error || 'Failed to submit application' })
       }
     } catch (error) {
+      console.error('❌ Submission error:', error)
       setMessage({ type: 'error', text: 'Network error. Please try again later.' })
     } finally {
       setIsSubmitting(false)
@@ -275,21 +417,21 @@ export default function Hero() {
       {/* Registration Form Modal */}
       {isFormOpen && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/60 backdrop-blur-sm">
-          <div className="relative w-full max-w-2xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl">
+          <div className="relative w-full max-w-4xl max-h-[90vh] overflow-y-auto bg-white rounded-2xl shadow-2xl">
             {/* Header */}
-            <div className="sticky top-0 bg-gradient-to-r from-orange-500 to-red-500 p-6 text-white rounded-t-2xl">
+            <div className="sticky top-0 bg-gradient-to-r from-orange-500 to-red-500 p-6 text-white rounded-t-2xl z-10">
               <button
                 onClick={() => setIsFormOpen(false)}
                 className="absolute top-4 right-4 p-2 hover:bg-white/20 rounded-full transition-colors"
               >
                 <X className="w-6 h-6" />
               </button>
-              <h2 className="text-3xl font-bold mb-2">Daycare Registration</h2>
-              <p className="text-white/90">Bosele Kgotla Day Care Center</p>
+              <h2 className="text-3xl font-bold mb-2">Daycare Registration Form</h2>
+              <p className="text-white/90">Bosele Day Care Center - Children&apos;s Application</p>
             </div>
 
             {/* Form */}
-            <form onSubmit={handleFormSubmit} className="p-6 space-y-4">
+            <form onSubmit={handleFormSubmit} className="p-6 space-y-8">
               {message.text && (
                 <div
                   className={`p-4 rounded-lg ${
@@ -302,119 +444,503 @@ export default function Hero() {
                 </div>
               )}
 
-              <div className="grid md:grid-cols-2 gap-4">
+              {/* 1. Details of Child */}
+              <div className="space-y-4">
+                <h3 className="text-xl font-bold text-gray-800 border-b-2 border-orange-500 pb-2">
+                  1. Details of Child
+                </h3>
+                
+                <div className="grid md:grid-cols-3 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Surname *
+                    </label>
+                    <input
+                      type="text"
+                      name="childSurname"
+                      value={formData.childSurname}
+                      onChange={handleFormChange}
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      First Name(s) *
+                    </label>
+                    <input
+                      type="text"
+                      name="childFirstName"
+                      value={formData.childFirstName}
+                      onChange={handleFormChange}
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Name Usually Called
+                    </label>
+                    <input
+                      type="text"
+                      name="childNickname"
+                      value={formData.childNickname}
+                      onChange={handleFormChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                <div className="grid md:grid-cols-2 gap-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Gender *
+                    </label>
+                    <select
+                      name="childGender"
+                      value={formData.childGender}
+                      onChange={handleFormChange}
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    >
+                      <option value="">Select Gender</option>
+                      <option value="Male">Male</option>
+                      <option value="Female">Female</option>
+                    </select>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Date of Birth *
+                    </label>
+                    <div className="grid grid-cols-3 gap-2">
+                      <input
+                        type="number"
+                        name="childDobDay"
+                        value={formData.childDobDay}
+                        onChange={handleFormChange}
+                        required
+                        min="1"
+                        max="31"
+                        placeholder="Day"
+                        className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                      <input
+                        type="number"
+                        name="childDobMonth"
+                        value={formData.childDobMonth}
+                        onChange={handleFormChange}
+                        required
+                        min="1"
+                        max="12"
+                        placeholder="Month"
+                        className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                      <input
+                        type="number"
+                        name="childDobYear"
+                        value={formData.childDobYear}
+                        onChange={handleFormChange}
+                        required
+                        min="2015"
+                        max="2026"
+                        placeholder="Year"
+                        className="w-full px-3 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                </div>
+
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Parent/Guardian Name *
+                    Residential Address/Ward *
+                  </label>
+                  <textarea
+                    name="residentialAddress"
+                    value={formData.residentialAddress}
+                    onChange={handleFormChange}
+                    required
+                    rows={2}
+                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                  />
+                </div>
+
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    Postal Address
                   </label>
                   <input
                     type="text"
-                    name="parentName"
-                    value={formData.parentName}
+                    name="postalAddress"
+                    value={formData.postalAddress}
                     onChange={handleFormChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    placeholder="John Doe"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Child&apos;s Name *
-                  </label>
-                  <input
-                    type="text"
-                    name="childName"
-                    value={formData.childName}
-                    onChange={handleFormChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    placeholder="Jane Doe"
-                  />
-                </div>
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Email Address *
-                  </label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleFormChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    placeholder="john@example.com"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Phone Number *
-                  </label>
-                  <input
-                    type="tel"
-                    name="phone"
-                    value={formData.phone}
-                    onChange={handleFormChange}
-                    required
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    placeholder="+267 1234 5678"
-                  />
-                </div>
-              </div>
-
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">
-                  Address *
-                </label>
-                <textarea
-                  name="address"
-                  value={formData.address}
-                  onChange={handleFormChange}
-                  required
-                  rows={3}
-                  className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                  placeholder="Full residential address"
-                />
-              </div>
-
-              <div className="grid md:grid-cols-2 gap-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Child&apos;s Age *
-                  </label>
-                  <input
-                    type="number"
-                    name="childAge"
-                    value={formData.childAge}
-                    onChange={handleFormChange}
-                    required
-                    min="0"
-                    max="10"
-                    className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
-                    placeholder="Age (0-10)"
-                  />
-                </div>
-
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Preferred Start Date *
-                  </label>
-                  <input
-                    type="date"
-                    name="startDate"
-                    value={formData.startDate}
-                    onChange={handleFormChange}
-                    required
                     className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
                   />
                 </div>
               </div>
 
-              <div className="flex gap-4 pt-4">
+              {/* 2. Details of Parent(s)/Guardian(s) */}
+              <div className="space-y-4">
+                <h3 className="text-xl font-bold text-gray-800 border-b-2 border-orange-500 pb-2">
+                  2. Details of Parent(s)/Guardian(s)
+                </h3>
+
+                {/* Mother Details */}
+                <div className="bg-pink-50 p-4 rounded-lg space-y-4">
+                  <h4 className="font-semibold text-gray-800">Mother&apos;s Information</h4>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Surname</label>
+                      <input
+                        type="text"
+                        name="motherSurname"
+                        value={formData.motherSurname}
+                        onChange={handleFormChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">First Name(s)</label>
+                      <input
+                        type="text"
+                        name="motherFirstName"
+                        value={formData.motherFirstName}
+                        onChange={handleFormChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Telephone - Home</label>
+                      <input
+                        type="tel"
+                        name="motherTelephoneHome"
+                        value={formData.motherTelephoneHome}
+                        onChange={handleFormChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Cell Phone</label>
+                      <input
+                        type="tel"
+                        name="motherCellphone"
+                        value={formData.motherCellphone}
+                        onChange={handleFormChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Place of Work</label>
+                      <input
+                        type="text"
+                        name="motherWorkplace"
+                        value={formData.motherWorkplace}
+                        onChange={handleFormChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Telephone - Work</label>
+                      <input
+                        type="tel"
+                        name="motherTelephoneWork"
+                        value={formData.motherTelephoneWork}
+                        onChange={handleFormChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Hours of Work</label>
+                      <input
+                        type="text"
+                        name="motherWorkHours"
+                        value={formData.motherWorkHours}
+                        onChange={handleFormChange}
+                        placeholder="e.g., 8:00 - 17:00"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
+                    <input
+                      type="email"
+                      name="motherEmail"
+                      value={formData.motherEmail}
+                      onChange={handleFormChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+
+                {/* Father Details */}
+                <div className="bg-blue-50 p-4 rounded-lg space-y-4">
+                  <h4 className="font-semibold text-gray-800">Father&apos;s Information</h4>
+                  
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Surname</label>
+                      <input
+                        type="text"
+                        name="fatherSurname"
+                        value={formData.fatherSurname}
+                        onChange={handleFormChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">First Name(s)</label>
+                      <input
+                        type="text"
+                        name="fatherFirstName"
+                        value={formData.fatherFirstName}
+                        onChange={handleFormChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Telephone - Home</label>
+                      <input
+                        type="tel"
+                        name="fatherTelephoneHome"
+                        value={formData.fatherTelephoneHome}
+                        onChange={handleFormChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Cell Phone</label>
+                      <input
+                        type="tel"
+                        name="fatherCellphone"
+                        value={formData.fatherCellphone}
+                        onChange={handleFormChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid md:grid-cols-3 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Place of Work</label>
+                      <input
+                        type="text"
+                        name="fatherWorkplace"
+                        value={formData.fatherWorkplace}
+                        onChange={handleFormChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Telephone - Work</label>
+                      <input
+                        type="tel"
+                        name="fatherTelephoneWork"
+                        value={formData.fatherTelephoneWork}
+                        onChange={handleFormChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Hours of Work</label>
+                      <input
+                        type="text"
+                        name="fatherWorkHours"
+                        value={formData.fatherWorkHours}
+                        onChange={handleFormChange}
+                        placeholder="e.g., 8:00 - 17:00"
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">E-mail</label>
+                    <input
+                      type="email"
+                      name="fatherEmail"
+                      value={formData.fatherEmail}
+                      onChange={handleFormChange}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                  </div>
+                </div>
+              </div>
+
+              {/* 3. Emergency Contact */}
+              <div className="space-y-4">
+                <h3 className="text-xl font-bold text-gray-800 border-b-2 border-orange-500 pb-2">
+                  3. Emergency Contact
+                </h3>
+                
+                <div className="bg-yellow-50 p-4 rounded-lg space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Name *</label>
+                    <input
+                      type="text"
+                      name="emergencyName"
+                      value={formData.emergencyName}
+                      onChange={handleFormChange}
+                      required
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">Address</label>
+                    <textarea
+                      name="emergencyAddress"
+                      value={formData.emergencyAddress}
+                      onChange={handleFormChange}
+                      rows={2}
+                      className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                    />
+                  </div>
+
+                  <div className="grid md:grid-cols-2 gap-4">
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Telephone *</label>
+                      <input
+                        type="tel"
+                        name="emergencyTelephone"
+                        value={formData.emergencyTelephone}
+                        onChange={handleFormChange}
+                        required
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">Cell Phone</label>
+                      <input
+                        type="tel"
+                        name="emergencyCellphone"
+                        value={formData.emergencyCellphone}
+                        onChange={handleFormChange}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* 4. Additional Information on the Child */}
+              <div className="space-y-4">
+                <h3 className="text-xl font-bold text-gray-800 border-b-2 border-orange-500 pb-2">
+                  4. Additional Information on the Child
+                </h3>
+
+                <div className="space-y-4">
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Is your child sensitive or allergic to particular medicines? *
+                    </label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="hasMedicineAllergies"
+                          value="No"
+                          checked={formData.hasMedicineAllergies === 'No'}
+                          onChange={handleFormChange}
+                          required
+                          className="mr-2"
+                        />
+                        No
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="hasMedicineAllergies"
+                          value="Yes"
+                          checked={formData.hasMedicineAllergies === 'Yes'}
+                          onChange={handleFormChange}
+                          required
+                          className="mr-2"
+                        />
+                        Yes
+                      </label>
+                    </div>
+                  </div>
+
+                  {formData.hasMedicineAllergies === 'Yes' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Which medicines?
+                      </label>
+                      <textarea
+                        name="medicineAllergiesDetails"
+                        value={formData.medicineAllergiesDetails}
+                        onChange={handleFormChange}
+                        rows={2}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                  )}
+
+                  <div>
+                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                      Is your child sensitive to particular foods? *
+                    </label>
+                    <div className="flex gap-4">
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="hasFoodAllergies"
+                          value="No"
+                          checked={formData.hasFoodAllergies === 'No'}
+                          onChange={handleFormChange}
+                          required
+                          className="mr-2"
+                        />
+                        No
+                      </label>
+                      <label className="flex items-center">
+                        <input
+                          type="radio"
+                          name="hasFoodAllergies"
+                          value="Yes"
+                          checked={formData.hasFoodAllergies === 'Yes'}
+                          onChange={handleFormChange}
+                          required
+                          className="mr-2"
+                        />
+                        Yes
+                      </label>
+                    </div>
+                  </div>
+
+                  {formData.hasFoodAllergies === 'Yes' && (
+                    <div>
+                      <label className="block text-sm font-medium text-gray-700 mb-2">
+                        Which foods?
+                      </label>
+                      <textarea
+                        name="foodAllergiesDetails"
+                        value={formData.foodAllergiesDetails}
+                        onChange={handleFormChange}
+                        rows={2}
+                        className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-transparent"
+                      />
+                    </div>
+                  )}
+                </div>
+              </div>
+
+              {/* Submit Buttons */}
+              <div className="flex gap-4 pt-4 border-t">
                 <button
                   type="button"
                   onClick={() => setIsFormOpen(false)}
