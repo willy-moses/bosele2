@@ -15,7 +15,7 @@ const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
 
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     // Check authentication
@@ -29,7 +29,7 @@ export async function PATCH(
     }
 
     const { status } = await request.json()
-    const { id } = params
+    const { id } = await params
 
     if (!['pending', 'approved', 'rejected'].includes(status)) {
       return NextResponse.json(
