@@ -1,11 +1,12 @@
+import { AuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { createClient } from '@supabase/supabase-js'
 import bcrypt from 'bcryptjs'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
+const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
 
-export const authOptions = {
+export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
       name: 'Credentials',
@@ -15,8 +16,12 @@ export const authOptions = {
       },
       async authorize(credentials) {
         try {
-          console.log('🔐 Attempting login for:', credentials.email)
+          console.log('🔐 Attempting login for:', credentials?.email)
           
+          if (!credentials?.email || !credentials?.password) {
+            return null
+          }
+
           const supabase = createClient(supabaseUrl, supabaseServiceKey)
           
           // ✅ Use staff_users table instead of admin_users
@@ -74,7 +79,7 @@ export const authOptions = {
     })
   ],
   session: {
-    strategy: 'jwt',
+    strategy: 'jwt' as const,
     maxAge: 30 * 24 * 60 * 60, // 30 days
   },
   pages: {
@@ -93,13 +98,13 @@ export const authOptions = {
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id
-        session.user.email = token.email
+        session.user.email = token.email!
         session.user.role = token.role
-        session.user.name = token.name
+        session.user.name = token.name!
       }
       return session
     }
   },
   secret: process.env.NEXTAUTH_SECRET,
-  debug: true
+  debug: process.env.NODE_ENV === 'development'
 }
