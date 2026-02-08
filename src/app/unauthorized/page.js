@@ -9,7 +9,7 @@ export default function UnauthorizedPage() {
           Access Denied
         </h1>
         <p className="text-gray-600 mb-6">
-          You don't have permission to access this page. Admin access required.
+          You don&apos;t have permission to access this page. Admin access required.
         </p>
         <Link 
           href="/admin/login"
