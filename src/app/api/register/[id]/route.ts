@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
-import { getServerSession } from 'next-auth'
+import { getServerSession } from 'next-auth/next'
+import type { AuthOptions } from 'next-auth'
 import { authOptions } from '@/lib/auth'
 
 const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
@@ -19,7 +20,7 @@ export async function PATCH(
 ) {
   try {
     // Check authentication
-    const session = await getServerSession(authOptions)
+    const session = await getServerSession(authOptions as AuthOptions)
     
     if (!session) {
       return NextResponse.json(
