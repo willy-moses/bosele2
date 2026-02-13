@@ -23,6 +23,19 @@ const UserManagement = () => {
     fetchUsers()
   }, [])
 
+  // Pre-fill form data when editing a user
+  useEffect(() => {
+    if (editingUser) {
+      setFormData({
+        name: editingUser.name || '',
+        email: editingUser.email || '',
+        role: editingUser.role || USER_ROLES.VIEWER,
+        department: editingUser.department || '',
+        password: '' // Don't pre-fill password
+      })
+    }
+  }, [editingUser])
+
   // Auto-clear messages after 5 seconds
   useEffect(() => {
     if (error || success) {
@@ -52,42 +65,54 @@ const UserManagement = () => {
     }
   }
 
-  const handleAddUser = async (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault()
     setError('')
     setSuccess('')
 
     // Validation
-    if (!formData.name || !formData.email || !formData.password || !formData.department) {
-      setError('All fields are required')
+    if (!formData.name || !formData.email || !formData.department) {
+      setError('Name, email, and department are required')
       return
     }
 
-    if (formData.password.length < 6) {
+    // Only validate password for new users
+    if (!editingUser && (!formData.password || formData.password.length < 6)) {
       setError('Password must be at least 6 characters')
       return
     }
     
     try {
-      const response = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
-      })
-
-      const data = await response.json()
-
-      if (data.success) {
-        setSuccess('User added successfully!')
-        setShowAddUser(false)
-        setFormData({ name: '', email: '', role: USER_ROLES.VIEWER, department: '', password: '' })
-        setShowPassword(false)
-        fetchUsers()
+      if (editingUser) {
+        // Update existing user
+        await handleUpdateUser(editingUser.id, {
+          name: formData.name,
+          email: formData.email,
+          role: formData.role,
+          department: formData.department
+        })
       } else {
-        setError(data.error || 'Failed to add user')
+        // Add new user
+        const response = await fetch('/api/users', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(formData),
+        })
+
+        const data = await response.json()
+
+        if (data.success) {
+          setSuccess('User added successfully!')
+          setShowAddUser(false)
+          setFormData({ name: '', email: '', role: USER_ROLES.VIEWER, department: '', password: '' })
+          setShowPassword(false)
+          fetchUsers()
+        } else {
+          setError(data.error || 'Failed to add user')
+        }
       }
     } catch (err) {
-      setError('Error adding user: ' + err.message)
+      setError('Error: ' + err.message)
     }
   }
 
@@ -104,6 +129,7 @@ const UserManagement = () => {
       if (data.success) {
         setSuccess('User updated successfully!')
         setEditingUser(null)
+        setFormData({ name: '', email: '', role: USER_ROLES.VIEWER, department: '', password: '' })
         fetchUsers()
       } else {
         setError(data.error || 'Failed to update user')
@@ -139,23 +165,42 @@ const UserManagement = () => {
     await handleUpdateUser(userId, { status: newStatus })
   }
 
+  const handleCloseModal = () => {
+    setShowAddUser(false)
+    setEditingUser(null)
+    setShowPassword(false)
+    setFormData({ name: '', email: '', role: USER_ROLES.VIEWER, department: '', password: '' })
+  }
+
   const getRoleBadge = (role) => {
     const styles = {
       admin: 'bg-purple-100 text-purple-800 border-purple-200',
       editor: 'bg-blue-100 text-blue-800 border-blue-200',
-      viewer: 'bg-green-100 text-green-800 border-green-200'
+      viewer: 'bg-green-100 text-green-800 border-green-200',
+      DAY_CARE_PRINCIPAL: 'bg-amber-100 text-amber-800 border-amber-200',
+      DAY_CARE_TEACHER: 'bg-orange-100 text-orange-800 border-orange-200'
     }
     
     const icons = {
       admin: '👑',
       editor: '✏️',
-      viewer: '👁️'
+      viewer: '👁️',
+      DAY_CARE_PRINCIPAL: '🎓',
+      DAY_CARE_TEACHER: '👨‍🏫'
+    }
+
+    const labels = {
+      admin: 'Admin',
+      editor: 'Editor',
+      viewer: 'Viewer',
+      DAY_CARE_PRINCIPAL: 'Day Care Principal',
+      DAY_CARE_TEACHER: 'Day Care Teacher'
     }
     
     return (
-      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${styles[role]}`}>
-        <span>{icons[role]}</span>
-        {role.charAt(0).toUpperCase() + role.slice(1)}
+      <span className={`inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold border ${styles[role] || styles.viewer}`}>
+        <span>{icons[role] || '👤'}</span>
+        {labels[role] || role}
       </span>
     )
   }
@@ -218,7 +263,7 @@ const UserManagement = () => {
               {editingUser ? 'Edit User' : 'Add New User'}
             </h3>
             
-            <form onSubmit={handleAddUser} className="space-y-4">
+            <form onSubmit={handleSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
                 <input
@@ -250,12 +295,20 @@ const UserManagement = () => {
                   onChange={(e) => setFormData({ ...formData, role: e.target.value })}
                   className="w-full px-4 py-2 border border-gray-300 rounded-xl focus:ring-2 focus:ring-emerald-500 focus:border-transparent"
                 >
-                  <option value={USER_ROLES.VIEWER}>Viewer - Read-only access</option>
-                  <option value={USER_ROLES.EDITOR}>Editor - Can create and edit</option>
-                  <option value={USER_ROLES.ADMIN}>Admin - Full access</option>
+                  <optgroup label="Staff Roles">
+                    <option value={USER_ROLES.VIEWER}>Viewer - Read-only access</option>
+                    <option value={USER_ROLES.EDITOR}>Editor - Can create and edit</option>
+                    <option value={USER_ROLES.ADMIN}>Admin - Full access</option>
+                  </optgroup>
+                  <optgroup label="Day Care Roles">
+                    <option value="DAY_CARE_PRINCIPAL">Day Care Principal - Full daycare access</option>
+                    <option value="DAY_CARE_TEACHER">Day Care Teacher - Limited daycare access</option>
+                  </optgroup>
                 </select>
                 <p className="text-xs text-gray-500 mt-1">
-                  {ROLE_PERMISSIONS[formData.role]?.description}
+                  {ROLE_PERMISSIONS[formData.role]?.description || 
+                   (formData.role === 'DAY_CARE_PRINCIPAL' ? 'Full access to daycare dashboard and all features' : 
+                    formData.role === 'DAY_CARE_TEACHER' ? 'Access to children, attendance, lessons, and messages' : '')}
                 </p>
               </div>
 
@@ -308,12 +361,7 @@ const UserManagement = () => {
               <div className="flex gap-3 pt-4">
                 <button
                   type="button"
-                  onClick={() => {
-                    setShowAddUser(false)
-                    setEditingUser(null)
-                    setShowPassword(false)
-                    setFormData({ name: '', email: '', role: USER_ROLES.VIEWER, department: '', password: '' })
-                  }}
+                  onClick={handleCloseModal}
                   className="flex-1 px-4 py-2 bg-gray-100 text-gray-700 rounded-xl font-medium hover:bg-gray-200 transition-colors"
                 >
                   Cancel
@@ -442,6 +490,21 @@ const UserManagement = () => {
               </div>
             </div>
           ))}
+        </div>
+
+        {/* Daycare Roles Info */}
+        <div className="mt-4 pt-4 border-t border-blue-200">
+          <h4 className="font-semibold text-gray-800 mb-3">Day Care Roles</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="bg-white rounded-xl p-4 border border-amber-200">
+              <div className="mb-2">{getRoleBadge('DAY_CARE_PRINCIPAL')}</div>
+              <p className="text-sm text-gray-600">Full access to daycare dashboard including staff management, reports, and all administrative features.</p>
+            </div>
+            <div className="bg-white rounded-xl p-4 border border-orange-200">
+              <div className="mb-2">{getRoleBadge('DAY_CARE_TEACHER')}</div>
+              <p className="text-sm text-gray-600">Access to children records, attendance tracking, lesson plans, and parent messages.</p>
+            </div>
+          </div>
         </div>
       </div>
     </div>

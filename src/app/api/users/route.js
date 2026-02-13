@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { getSupabaseAdmin } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase'
 import bcrypt from 'bcryptjs'
 
 // GET - Fetch all users
@@ -26,7 +26,7 @@ export async function GET(request) {
       }, { status: 403 })
     }
 
-    const supabase = getSupabaseAdmin()
+    const supabase = supabaseAdmin
     
     const { data: users, error } = await supabase
       .from('staff_users')
@@ -83,7 +83,7 @@ export async function POST(request) {
       }, { status: 400 })
     }
 
-    const supabase = getSupabaseAdmin()
+    const supabase = supabaseAdmin
 
     // Check if user already exists
     const { data: existingUser } = await supabase
@@ -168,7 +168,7 @@ export async function PATCH(request) {
       }, { status: 400 })
     }
 
-    const supabase = getSupabaseAdmin()
+    const supabase = supabaseAdmin
 
     const { data: updatedUser, error } = await supabase
       .from('staff_users')
@@ -238,7 +238,7 @@ export async function DELETE(request) {
       }, { status: 400 })
     }
 
-    const supabase = getSupabaseAdmin()
+    const supabase = supabaseAdmin
 
     const { error } = await supabase
       .from('staff_users')

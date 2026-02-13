@@ -1,7 +1,4 @@
-import { createClient } from '@supabase/supabase-js'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
 
 /**
  * Create a notification when a new registration is submitted
@@ -9,7 +6,6 @@ const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
  */
 export async function createRegistrationNotification(registrationId, registrationData) {
   try {
-    const supabase = createClient(supabaseUrl, supabaseKey)
 
     const { data, error } = await supabase
       .from('notifications')
@@ -44,7 +40,6 @@ export async function createRegistrationNotification(registrationId, registratio
  */
 export async function createContactNotification(contactMessageId, contactData) {
   try {
-    const supabase = createClient(supabaseUrl, supabaseKey)
 
     const { data, error } = await supabase
       .from('notifications')
@@ -78,7 +73,6 @@ export async function createContactNotification(contactMessageId, contactData) {
  */
 export async function markRegistrationAsRead(registrationId) {
   try {
-    const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Update the registration
     await supabase
@@ -103,7 +97,6 @@ export async function markRegistrationAsRead(registrationId) {
  */
 export async function markContactAsRead(contactMessageId) {
   try {
-    const supabase = createClient(supabaseUrl, supabaseKey)
 
     // Update the contact message
     await supabase

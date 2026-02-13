@@ -1,23 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-
-// Initialize Supabase clients
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseAnonKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
-
-// Public client for registration form
-const supabasePublic = createClient(supabaseUrl, supabaseAnonKey)
-
-// Admin client for queries
-const supabaseAdmin = createClient(supabaseUrl, supabaseServiceKey, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  }
-})
+import { supabase, supabaseAdmin } from '@/lib/supabase'
 
 export async function POST(request: NextRequest) {
   try {
@@ -82,8 +66,8 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // ✅ Use public client for form submission (respects RLS)
-    const { data, error } = await supabasePublic
+    // Use public client for form submission (respects RLS)
+    const { data, error } = await supabase
       .from('registrations')
       .insert([
         {
@@ -110,7 +94,7 @@ export async function POST(request: NextRequest) {
 
     // Create notification for new registration
     try {
-      await supabasePublic
+      await supabase
         .from('notifications')
         .insert([
           {
@@ -149,10 +133,9 @@ export async function POST(request: NextRequest) {
   }
 }
 
-// ✅ GET endpoint with authentication (for admin dashboard)
+// GET endpoint with authentication (for admin dashboard)
 export async function GET(request: NextRequest) {
   try {
-    // Check authentication
     const session = await getServerSession(authOptions)
     
     if (!session) {
@@ -167,7 +150,7 @@ export async function GET(request: NextRequest) {
     const limit = parseInt(searchParams.get('limit') || '50')
     const offset = parseInt(searchParams.get('offset') || '0')
 
-    // ✅ Use admin client to bypass RLS
+    // Use admin client to bypass RLS
     let query = supabaseAdmin
       .from('registrations')
       .select('*', { count: 'exact' })

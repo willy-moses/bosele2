@@ -2,8 +2,8 @@
 import { signOut } from 'next-auth/react'
 import { useState, useEffect } from 'react'
 import UserManagement from './UserManagement'
-import RegistrationsManagement from './RegistrationsManagement'
 import MessagesManagement from './MessagesManagement'
+import ElderlySchoolersManagement from './ElderlySchoolersManagement'
 
 
 
@@ -12,7 +12,6 @@ export default function StaffDashboard({ user }) {
   const [activeTab, setActiveTab] = useState('overview')
   const [notificationCount, setNotificationCount] = useState(0)
   const [contactNotifications, setContactNotifications] = useState(0)
-  const [registrationNotifications, setRegistrationNotifications] = useState(0)
 
   // Debug logging
   console.log('👤 Current user:', user)
@@ -43,12 +42,10 @@ export default function StaffDashboard({ user }) {
       
       setNotificationCount(data.count || 0)
       setContactNotifications(data.contactCount || 0)
-      setRegistrationNotifications(data.registrationCount || 0)
       
       console.log('📊 Updated notification counts:', {
         total: data.count || 0,
-        contact: data.contactCount || 0,
-        registration: data.registrationCount || 0
+        contact: data.contactCount || 0
       })
     } catch (error) {
       console.error('Error fetching notification count:', error)
@@ -59,7 +56,6 @@ export default function StaffDashboard({ user }) {
   const isAdmin = user.role?.toUpperCase() === 'ADMIN'
   
   console.log('🔴 Contact Notifications State:', contactNotifications)
-  console.log('🔴 Registration Notifications State:', registrationNotifications)
   console.log('🔔 Total Notification Count:', notificationCount)
   
   return (
@@ -105,17 +101,19 @@ export default function StaffDashboard({ user }) {
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-8">
-            {['overview', 'registrations', 'messages', 'users', 'content', 'settings'].map((tab) => {
+            {['overview', 'messages', 'elderly-schoolers', 'users', 'content', 'settings'].map((tab) => {
               // Determine notification count for each tab
               let tabNotificationCount = 0
               
-              if (tab === 'registrations') {
-                tabNotificationCount = registrationNotifications
-                console.log('🔵 Registrations Tab - Rendering with count:', registrationNotifications)
-              } else if (tab === 'messages') {
+              if (tab === 'messages') {
                 tabNotificationCount = contactNotifications
                 console.log('🔵 Messages Tab - Rendering with count:', contactNotifications)
               }
+
+              // Format tab label
+              const tabLabel = tab === 'elderly-schoolers' 
+                ? 'Elderly Schoolers' 
+                : tab.charAt(0).toUpperCase() + tab.slice(1)
 
               return (
                 <button
@@ -127,7 +125,7 @@ export default function StaffDashboard({ user }) {
                       : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
                   }`}
                 >
-                  {tab.charAt(0).toUpperCase() + tab.slice(1)}
+                  {tabLabel}
                   
                   {/* Show notification badge with count */}
                   {tabNotificationCount > 0 && (
@@ -167,12 +165,12 @@ export default function StaffDashboard({ user }) {
           </div>
         )}
 
-        {activeTab === 'registrations' && (
-          <RegistrationsManagement />
-        )}
-
         {activeTab === 'messages' && (
           <MessagesManagement />
+        )}
+
+        {activeTab === 'elderly-schoolers' && (
+          <ElderlySchoolersManagement />
         )}
 
         {activeTab === 'users' && isAdmin && (

@@ -1,38 +1,122 @@
 'use client'
-import { useState, useEffect } from 'react'
-import { User, Mail, Phone, MapPin, Calendar, Baby, FileText, X, Trash2, Eye, Briefcase, AlertCircle, Heart, Clock, CheckCircle, RefreshCw } from 'lucide-react'
+import { signOut } from 'next-auth/react'
+import { useState, useEffect, useCallback } from 'react'
+import { User, Mail, Phone, MapPin, Calendar, Baby, FileText, X, Trash2, Eye, Briefcase, AlertCircle, Heart, Clock, CheckCircle, RefreshCw, Edit } from 'lucide-react'
+import ChildrenManagement from '../ChildrenManagement'
+import StaffManagement from '../StaffManagement'
 
-export default function RegistrationsManagement() {
+// ─── Role constants (underscores to match DB) ───────────────────────────────────
+const ROLES = {
+  PRINCIPAL: 'DAY_CARE_PRINCIPAL',
+  TEACHER:   'DAY_CARE_TEACHER',
+}
+
+// ─── Tab definitions ─────────────────────────────────────────────────────────────
+const ALL_TABS = [
+  { id: 'overview',      label: 'Overview',      roles: [ROLES.PRINCIPAL, ROLES.TEACHER] },
+  { id: 'registrations', label: 'Registrations', roles: [ROLES.PRINCIPAL, ROLES.TEACHER] },
+  { id: 'children',      label: 'Children',      roles: [ROLES.PRINCIPAL, ROLES.TEACHER] },
+  { id: 'attendance',    label: 'Attendance',    roles: [ROLES.PRINCIPAL, ROLES.TEACHER] },
+  { id: 'lessons',       label: 'Lessons',       roles: [ROLES.PRINCIPAL, ROLES.TEACHER] },
+  { id: 'staff',         label: 'Staff',         roles: [ROLES.PRINCIPAL] },
+  { id: 'reports',       label: 'Reports',       roles: [ROLES.PRINCIPAL] },
+  { id: 'settings',      label: 'Settings',      roles: [ROLES.PRINCIPAL] },
+]
+
+// ─── Helpers ──────────────────────────────────────────────────────────────────────
+function roleBadgeClass(role) {
+  switch (role?.toUpperCase()) {
+    case ROLES.PRINCIPAL: return 'bg-amber-100 text-amber-800 border border-amber-300'
+    case ROLES.TEACHER:   return 'bg-sky-100 text-sky-800 border border-sky-300'
+    default:              return 'bg-gray-100 text-gray-700 border border-gray-300'
+  }
+}
+
+function formatDate(dateStr) {
+  if (!dateStr) return '—'
+  return new Date(dateStr).toLocaleDateString('en-GB', {
+    day: '2-digit', month: 'short', year: 'numeric'
+  })
+}
+
+function StatusBadge({ status }) {
+  const map = {
+    PENDING:   'bg-yellow-100 text-yellow-800 border-yellow-200',
+    pending:   'bg-yellow-100 text-yellow-800 border-yellow-200',
+    APPROVED:  'bg-green-100 text-green-800 border-green-200',
+    approved:  'bg-green-100 text-green-800 border-green-200',
+    REJECTED:  'bg-red-100 text-red-800 border-red-200',
+    rejected:  'bg-red-100 text-red-800 border-red-200',
+    WAITLIST:  'bg-blue-100 text-blue-800 border-blue-200',
+    waitlist:  'bg-blue-100 text-blue-800 border-blue-200',
+    ENROLLED:  'bg-purple-100 text-purple-800 border-purple-200',
+    active:    'bg-green-100 text-green-800 border-green-200',
+    inactive:  'bg-gray-100 text-gray-700 border-gray-200',
+  }
+  const normalizedStatus = status?.toLowerCase() || 'pending'
+  return (
+    <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${map[normalizedStatus] ?? 'bg-gray-100 text-gray-700 border-gray-200'}`}>
+      {status?.charAt(0).toUpperCase() + status?.slice(1).toLowerCase() || 'Pending'}
+    </span>
+  )
+}
+
+// ─── Icons ────────────────────────────────────────────────────────────────────────
+const IconBell = () => (
+  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+  </svg>
+)
+
+// ─── Stat Card ────────────────────────────────────────────────────────────────────
+function StatCard({ label, value, color, ping }) {
+  const colorMap = {
+    amber:   'text-amber-600',
+    sky:     'text-sky-600',
+    orange:  'text-orange-600',
+    rose:    'text-rose-600',
+    emerald: 'text-emerald-600',
+  }
+  return (
+    <div className="bg-white rounded-2xl shadow-sm border border-amber-50 p-6 relative">
+      <h3 className="text-sm font-medium text-gray-500 mb-1">{label}</h3>
+      <p className={`text-3xl font-bold ${colorMap[color] ?? 'text-gray-800'}`}>{value}</p>
+      {ping && (
+        <span className="absolute top-4 right-4 flex h-3 w-3">
+          <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-orange-400 opacity-75" />
+          <span className="relative inline-flex rounded-full h-3 w-3 bg-orange-500" />
+        </span>
+      )}
+    </div>
+  )
+}
+
+// ─── Registrations Management (INTEGRATED & IMPROVED) ─────────────────────────────
+function RegistrationsManagement() {
   const [registrations, setRegistrations] = useState([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState(null)
   const [selectedRegistration, setSelectedRegistration] = useState(null)
   const [actionLoading, setActionLoading] = useState(false)
 
-  useEffect(() => {
-    fetchRegistrations()
-  }, [])
+  const safeRegistrations = Array.isArray(registrations) ? registrations : []
 
-  const fetchRegistrations = async () => {
+  const fetchRegistrations = useCallback(async () => {
     try {
       setLoading(true)
       setError(null)
       
-      console.log('🔍 Fetching registrations...')
       const res = await fetch('/api/registrations', {
-        cache: 'no-store' // Prevent caching
+        cache: 'no-store'
       })
       const data = await res.json()
-      
-      console.log('📦 Fetched data:', data)
       
       if (!res.ok || data.error) {
         throw new Error(data.error || 'Failed to fetch registrations')
       }
       
       let registrationsArray = Array.isArray(data) ? data : (data.registrations || [])
-      
-      console.log('✅ Setting', registrationsArray.length, 'registrations')
       setRegistrations(registrationsArray)
     } catch (error) {
       console.error('❌ Error fetching registrations:', error)
@@ -41,7 +125,11 @@ export default function RegistrationsManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
+
+  useEffect(() => {
+    fetchRegistrations()
+  }, [fetchRegistrations])
 
   const handleViewRegistration = async (registration) => {
     setSelectedRegistration(registration)
@@ -67,9 +155,6 @@ export default function RegistrationsManagement() {
 
     setActionLoading(true)
     try {
-      console.log('🔄 Approving registration:', id)
-      
-      // Update registration status
       const res = await fetch('/api/registrations', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
@@ -80,15 +165,11 @@ export default function RegistrationsManagement() {
       })
 
       const data = await res.json()
-      console.log('📦 Approve response:', data)
 
       if (!res.ok) {
         throw new Error(data.error || 'Failed to approve registration')
       }
 
-      console.log('✅ Registration approved, deleting notification...')
-
-      // Delete the notification for this registration
       await fetch('/api/notifications/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
@@ -98,15 +179,9 @@ export default function RegistrationsManagement() {
         })
       })
 
-      console.log('✅ Notification deleted, refreshing data...')
-
-      // Trigger notification update
       window.dispatchEvent(new Event('notificationUpdate'))
-
-      // **IMPORTANT: Refetch data from database**
       await fetchRegistrations()
 
-      // Close modal if it's open
       if (selectedRegistration?.id === id) {
         setSelectedRegistration(null)
       }
@@ -125,9 +200,6 @@ export default function RegistrationsManagement() {
 
     setActionLoading(true)
     try {
-      console.log('🗑️ Deleting registration:', id)
-      
-      // Delete notification first
       await fetch('/api/notifications/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
@@ -137,29 +209,19 @@ export default function RegistrationsManagement() {
         })
       })
 
-      console.log('✅ Notification deleted, deleting registration...')
-
-      // Delete registration
       const res = await fetch(`/api/registrations?id=${id}`, {
         method: 'DELETE'
       })
 
       const data = await res.json()
-      console.log('📦 Delete response:', data)
 
       if (!res.ok) {
         throw new Error(data.error || 'Failed to delete registration')
       }
 
-      console.log('✅ Registration deleted, refreshing data...')
-
-      // Trigger notification update
       window.dispatchEvent(new Event('notificationUpdate'))
-
-      // **IMPORTANT: Refetch data from database**
       await fetchRegistrations()
 
-      // Close modal
       setSelectedRegistration(null)
 
       alert('Registration deleted successfully!')
@@ -169,21 +231,6 @@ export default function RegistrationsManagement() {
     } finally {
       setActionLoading(false)
     }
-  }
-
-  const getStatusBadge = (status) => {
-    const styles = {
-      approved: 'bg-green-100 text-green-800 border-green-200',
-      pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-      waitlist: 'bg-blue-100 text-blue-800 border-blue-200',
-      rejected: 'bg-red-100 text-red-800 border-red-200'
-    }
-    
-    return (
-      <span className={`px-3 py-1 rounded-full text-xs font-semibold border ${styles[status] || styles.pending}`}>
-        {(status || 'pending').charAt(0).toUpperCase() + (status || 'pending').slice(1)}
-      </span>
-    )
   }
 
   if (loading) {
@@ -233,24 +280,26 @@ export default function RegistrationsManagement() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
             <p className="text-sm text-blue-600 font-semibold">Total</p>
-            <p className="text-2xl font-bold text-blue-900">{registrations.length}</p>
+            <p className="text-2xl font-bold text-blue-900">
+              {safeRegistrations.length}
+            </p>
           </div>
           <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-4 border border-yellow-200">
             <p className="text-sm text-yellow-600 font-semibold">Pending</p>
             <p className="text-2xl font-bold text-yellow-900">
-              {registrations.filter(r => r.status === 'pending').length}
+              {safeRegistrations.filter(r => r.status === 'pending').length}
             </p>
           </div>
           <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
             <p className="text-sm text-green-600 font-semibold">Approved</p>
             <p className="text-2xl font-bold text-green-900">
-              {registrations.filter(r => r.status === 'approved').length}
+              {safeRegistrations.filter(r => r.status === 'approved').length}
             </p>
           </div>
           <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
             <p className="text-sm text-purple-600 font-semibold">Waitlist</p>
             <p className="text-2xl font-bold text-purple-900">
-              {registrations.filter(r => r.status === 'waitlist').length}
+              {safeRegistrations.filter(r => r.status === 'waitlist').length}
             </p>
           </div>
         </div>
@@ -271,7 +320,7 @@ export default function RegistrationsManagement() {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {registrations.length === 0 ? (
+              {safeRegistrations.length === 0 ? (
                 <tr>
                   <td colSpan="6" className="px-6 py-12 text-center text-gray-500">
                     <div className="flex flex-col items-center">
@@ -282,7 +331,7 @@ export default function RegistrationsManagement() {
                   </td>
                 </tr>
               ) : (
-                registrations.map((reg) => (
+                safeRegistrations.map((reg) => (
                   <tr key={reg.id} className="hover:bg-gray-50 transition-colors">
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
@@ -317,7 +366,7 @@ export default function RegistrationsManagement() {
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
-                      {getStatusBadge(reg.status)}
+                      <StatusBadge status={reg.status} />
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {new Date(reg.created_at || reg.createdAt).toLocaleDateString()}
@@ -359,7 +408,7 @@ export default function RegistrationsManagement() {
         </div>
       </div>
 
-      {/* Detailed View Modal */}
+      {/* Detailed View Modal - Keeping the same as before */}
       {selectedRegistration && (() => {
         const additionalData = selectedRegistration.additional_data || {}
         const child = additionalData.child || {}
@@ -398,7 +447,7 @@ export default function RegistrationsManagement() {
                 <div className="flex items-center justify-between pb-4 border-b">
                   <div>
                     <p className="text-sm text-gray-500">Application Status</p>
-                    <div className="mt-1">{getStatusBadge(selectedRegistration.status)}</div>
+                    <div className="mt-1"><StatusBadge status={selectedRegistration.status} /></div>
                   </div>
                   <div className="text-right">
                     <p className="text-sm text-gray-500">Submitted</p>
@@ -682,6 +731,210 @@ export default function RegistrationsManagement() {
           </div>
         )
       })()}
+    </div>
+  )
+}
+
+
+
+
+
+// ─── Placeholder sub-components ───────────────────────────────────────────────────
+const Placeholder = ({ title, emoji, note }) => (
+  <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
+    <h2 className="text-xl font-semibold text-amber-900 mb-2">{title}</h2>
+    <p className="text-amber-700">{emoji} {note ?? `${title} coming soon…`}</p>
+  </div>
+)
+
+// ─── Permission Denied ─────────────────────────────────────────────────────────────
+function PermissionDenied({ role, section }) {
+  return (
+    <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-5">
+      <p className="text-yellow-900 font-medium">
+        🔒 You don't have permission to access <strong>{section}</strong>.
+      </p>
+      <p className="text-sm text-yellow-700 mt-2">
+        Your current role — <span className="font-semibold">{role}</span> — does not include this section.
+        Please contact a <strong>Day-Care Principal</strong> if you need access.
+      </p>
+    </div>
+  )
+}
+
+// ─── Main Dashboard ────────────────────────────────────────────────────────────────
+export default function DayCareDashboard({ user }) {
+  const [activeTab, setActiveTab]                     = useState('overview')
+  const [notificationCount, setNotificationCount]     = useState(0)
+  const [childrenCount, setChildrenCount]             = useState(0)
+  const [registrationCount, setRegistrationCount]     = useState(0)
+
+  // ✅ Normalize role — handle both hyphen and underscore variants
+  const rawRole = user.role?.toUpperCase().replace(/-/g, '_')
+  const isPrincipal = rawRole === ROLES.PRINCIPAL
+
+  const visibleTabs = ALL_TABS.filter(t => t.roles.includes(rawRole))
+
+  useEffect(() => {
+    if (!visibleTabs.find(t => t.id === activeTab)) setActiveTab('overview')
+  }, [rawRole])
+
+  const fetchCounts = useCallback(async () => {
+    try {
+      // Fetch children count
+      const childRes = await fetch('/api/daycare/children')
+      const childData = await childRes.json()
+      const children = childData.children || []
+      setChildrenCount(children.filter(c => c.status === 'active').length)
+
+      // Fetch registrations count
+      const regRes = await fetch('/api/registrations')
+      const regData = await regRes.json()
+      const registrations = Array.isArray(regData) ? regData : (regData.registrations || [])
+      setRegistrationCount(registrations.filter(r => r.status === 'pending').length)
+
+      // Fetch notification count
+      const notifRes = await fetch('/api/daycare/notifications/count')
+      const notifData = await notifRes.json()
+      setNotificationCount(notifData.count || 0)
+    } catch (err) {
+      console.error('Failed to fetch counts:', err)
+    }
+  }, [])
+
+  useEffect(() => {
+    fetchCounts()
+    window.addEventListener('notificationUpdate', fetchCounts)
+    return () => window.removeEventListener('notificationUpdate', fetchCounts)
+  }, [fetchCounts])
+
+  function tabBadge(tabId) {
+    if (tabId === 'children')      return childrenCount
+    if (tabId === 'registrations') return registrationCount
+    return 0
+  }
+
+  return (
+    <div className="min-h-screen" style={{ background: 'linear-gradient(135deg, #fffbeb 0%, #fff7ed 50%, #fefce8 100%)' }}>
+
+      {/* ── Header ── */}
+      <header className="bg-white shadow-sm border-b border-amber-100">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
+          <div className="flex justify-between items-center">
+            <div className="flex items-center gap-3">
+              <div className="w-10 h-10 rounded-xl flex items-center justify-center text-white text-lg font-black shadow"
+                style={{ background: 'linear-gradient(135deg, #f59e0b, #f97316)' }}>
+                🌻
+              </div>
+              <div>
+                <h1 className="text-xl font-bold text-amber-900 leading-tight">Bosele Day Care Pre-school</h1>
+                <p className="text-xs text-amber-600">Welcome back, {user.name}</p>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <button className="relative p-2 text-amber-600 hover:text-amber-900 transition-colors rounded-lg hover:bg-amber-50">
+                <IconBell />
+                {notificationCount > 0 && (
+                  <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                    {notificationCount}
+                  </span>
+                )}
+              </button>
+              <span className={`px-3 py-1 rounded-full text-xs font-semibold tracking-wide ${roleBadgeClass(rawRole)}`}>
+                {user.role}
+              </span>
+              <button
+                onClick={() => signOut({ callbackUrl: '/' })}
+                className="px-4 py-2 bg-red-500 hover:bg-red-600 text-white text-sm font-medium rounded-lg transition-colors shadow-sm"
+              >
+                Sign Out
+              </button>
+            </div>
+          </div>
+        </div>
+      </header>
+
+      {/* ── Navigation Tabs ── */}
+      <div className="bg-white border-b border-amber-100 sticky top-0 z-10">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <nav className="flex space-x-1 overflow-x-auto scrollbar-hide">
+            {visibleTabs.map(({ id, label }) => {
+              const badge    = tabBadge(id)
+              const isActive = activeTab === id
+              return (
+                <button
+                  key={id}
+                  onClick={() => setActiveTab(id)}
+                  className={`relative py-4 px-4 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
+                    isActive
+                      ? 'border-amber-500 text-amber-700'
+                      : 'border-transparent text-gray-500 hover:text-amber-700 hover:border-amber-300'
+                  }`}
+                >
+                  {label}
+                  {badge > 0 && (
+                    <span className="absolute -top-1 right-0 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
+                      {badge}
+                    </span>
+                  )}
+                </button>
+              )
+            })}
+          </nav>
+        </div>
+      </div>
+
+      {/* ── Main Content ── */}
+      <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+
+        {activeTab === 'overview' && (
+          <div className="space-y-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              <StatCard label="Enrolled Children"   value={childrenCount}      color="amber"   />
+              <StatCard label="Present Today"        value="—"                  color="emerald" />
+              <StatCard label="New Registrations"    value={registrationCount}  color="sky"     ping={registrationCount > 0} />
+            </div>
+
+            <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 flex items-start gap-4">
+              <span className="text-3xl">📋</span>
+              <div>
+                <p className="font-semibold text-amber-900">
+                  {isPrincipal
+                    ? 'Principal Dashboard — full access enabled.'
+                    : 'Teacher Dashboard — class management & communication tools available.'}
+                </p>
+                <p className="text-sm text-amber-700 mt-1">
+                  {isPrincipal
+                    ? 'You can manage staff, view reports, and control all settings.'
+                    : 'Contact your principal to request access to staff or report sections.'}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {activeTab === 'registrations' && <RegistrationsManagement />}
+        {activeTab === 'children'      && <ChildrenManagement />}
+        {activeTab === 'attendance'    && <Placeholder title="Attendance"         emoji="📅" />}
+        {activeTab === 'lessons'       && <Placeholder title="Lessons & Activities" emoji="📚" />}
+
+       {activeTab === 'staff' && (
+  isPrincipal
+    ? <StaffManagement />
+    : <PermissionDenied role={user.role} section="Staff Management" />
+)}
+        {activeTab === 'reports' && (
+          isPrincipal
+            ? <Placeholder title="Reports" emoji="📊" />
+            : <PermissionDenied role={user.role} section="Reports" />
+        )}
+        {activeTab === 'settings' && (
+          isPrincipal
+            ? <Placeholder title="Settings" emoji="⚙️" />
+            : <PermissionDenied role={user.role} section="Settings" />
+        )}
+      </main>
     </div>
   )
 }

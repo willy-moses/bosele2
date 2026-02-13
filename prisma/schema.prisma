@@ -10,23 +10,23 @@ datasource db {
 }
 
 // ========================================
-// DAYCARE REGISTRATION SYSTEM
+// DAYCARE REGISTRATION SYSTEM (Prisma - OLD)
 // ========================================
 
 model DaycareRegistration {
-  id         String   @id @default(cuid())
+  id         String             @id @default(cuid())
   parentName String
   childName  String
-  email      String   @unique
+  email      String             @unique
   phone      String
-  address    String   @db.Text
+  address    String             @db.Text
   childAge   Int
   startDate  DateTime
   status     RegistrationStatus @default(PENDING)
-  notes      String?  @db.Text
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-  
+  notes      String?            @db.Text
+  createdAt  DateTime           @default(now())
+  updatedAt  DateTime           @updatedAt
+
   @@index([email])
   @@index([status])
   @@index([createdAt])
@@ -42,6 +42,27 @@ enum RegistrationStatus {
 }
 
 // ========================================
+// SUPABASE REGISTRATIONS TABLE (NEW)
+// ========================================
+
+model Registration {
+  id              String   @id @default(dbgenerated("gen_random_uuid()"))
+  parent_name     String
+  child_name      String
+  email           String
+  phone           String
+  address         String
+  child_age       Int
+  start_date      DateTime @db.Date
+  status          String   @default("pending")
+  additional_data Json?    @db.JsonB
+  created_at      DateTime @default(now()) @db.Timestamptz
+  updated_at      DateTime @default(now()) @updatedAt @db.Timestamptz
+
+  @@map("registrations")
+}
+
+// ========================================
 // STAFF AUTHENTICATION SYSTEM
 // ========================================
 
@@ -54,7 +75,7 @@ model User {
   role      Role     @default(VIEWER)
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-  
+
   @@index([email])
   @@index([username])
   @@map("staff_users")
@@ -64,4 +85,118 @@ enum Role {
   ADMIN
   EDITOR
   VIEWER
+  DAY_CARE_PRINCIPAL
+  DAY_CARE_TEACHER
+}
+
+// ========================================
+// ENROLLED STUDENTS MANAGEMENT
+// ========================================
+
+model Child {
+  id               String       @id @default(cuid())
+  firstName        String
+  lastName         String
+  dateOfBirth      DateTime
+  gender           String
+  age              Int?
+
+  parentFirstName  String
+  parentLastName   String
+  parentEmail      String
+  parentPhone      String
+  address          String?
+
+  emergencyContact String
+  emergencyPhone   String
+
+  medicalInfo      String?
+  allergies        String?
+
+  status           String       @default("active")
+  class            String?
+  enrollmentDate   DateTime     @default(now())
+
+  registrationId   String?
+
+  createdAt        DateTime     @default(now())
+  updatedAt        DateTime     @updatedAt
+
+  attendance       Attendance[]
+
+  @@index([status])
+  @@index([parentEmail])
+  @@index([class])
+  @@map("Child")
+}
+
+model Attendance {
+  id           String    @id @default(cuid())
+  childId      String
+  child        Child     @relation(fields: [childId], references: [id], onDelete: Cascade)
+
+  date         DateTime  @default(now())
+  status       String
+
+  checkInTime  DateTime?
+  checkOutTime DateTime?
+
+  notes        String?
+  recordedBy   String
+
+  createdAt    DateTime  @default(now())
+  updatedAt    DateTime  @updatedAt
+
+  @@index([childId])
+  @@index([date])
+  @@index([status])
+  @@map("Attendance")
+}
+
+// ========================================
+// STAFF MANAGEMENT (SUPABASE)
+// ========================================
+
+model Staff {
+  id                    String    @id @default(dbgenerated("gen_random_uuid()"))
+  firstName             String    @map("first_name")
+  lastName              String    @map("last_name")
+  email                 String    @unique
+  phone                 String
+  address               String?
+  position              String
+  department            String
+  employeeId            String    @unique @map("employee_id")
+  dateOfBirth           DateTime? @map("date_of_birth") @db.Date
+  hireDate              DateTime  @map("hire_date") @db.Date
+  salary                Decimal?
+  emergencyContactName  String?   @map("emergency_contact_name")
+  emergencyContactPhone String?   @map("emergency_contact_phone")
+  status                String?   @default("active")
+  createdAt             DateTime  @default(now()) @map("created_at") @db.Timestamptz
+  updatedAt             DateTime  @updatedAt @map("updated_at") @db.Timestamptz
+
+  @@map("staff")
+}
+
+// ========================================
+// NOTIFICATIONS (SUPABASE)
+// ========================================
+
+model DaycareNotification {
+  id          String    @id @default(dbgenerated("gen_random_uuid()::text"))
+  type        String
+  title       String
+  message     String
+  relatedId   String?
+  relatedType String?
+  isRead      Boolean   @default(false)
+  readAt      DateTime?
+  targetRole  String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([isRead])
+  @@index([type])
+  @@map("DaycareNotification")
 }

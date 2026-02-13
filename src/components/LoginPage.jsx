@@ -1,10 +1,26 @@
 'use client'
 import { useState } from 'react'
-import { signIn } from 'next-auth/react'
+import { signIn, getSession } from 'next-auth/react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 
-// Icons
+// ─── Role → dashboard route map ────────────────────────────────────────────────
+function getDashboardRoute(role) {
+  switch (role?.toUpperCase()) {
+    case 'DAY_CARE_PRINCIPAL':
+    case 'DAY-CARE-PRINCIPAL':
+      return '/dashboard/daycare'
+    case 'DAY_CARE_TEACHER':
+    case 'DAY-CARE-TEACHER':
+      return '/dashboard/daycare'
+    case 'ADMIN':
+    case 'STAFF':
+    default:
+      return '/dashboard'
+  }
+}
+
+// ─── Icons ──────────────────────────────────────────────────────────────────────
 const EmailIcon = () => (
   <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 12a4 4 0 10-8 0 4 4 0 008 0zm0 0v1.5a2.5 2.5 0 005 0V12a9 9 0 10-9 9m4.5-1.206a8.959 8.959 0 01-4.5 1.207" />
@@ -26,15 +42,26 @@ const GoogleIcon = () => (
   </svg>
 )
 
+// ─── Component ──────────────────────────────────────────────────────────────────
 export default function LoginPage() {
   const router = useRouter()
-  const [formData, setFormData] = useState({
-    email: '',
-    password: ''
-  })
+  const [formData, setFormData] = useState({ email: '', password: '' })
   const [error, setError] = useState('')
   const [loading, setLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
+
+  // After any successful sign-in, read the session role and redirect
+  const redirectByRole = async () => {
+    const session = await getSession()
+    console.log('🔐 Session after login:', session)
+    console.log('👤 Role:', session?.user?.role)
+
+    const route = getDashboardRoute(session?.user?.role)
+    console.log('➡️  Redirecting to:', route)
+
+    router.push(route)
+    router.refresh()
+  }
 
   const handleSubmit = async (e) => {
     e.preventDefault()
@@ -51,8 +78,7 @@ export default function LoginPage() {
       if (result?.error) {
         setError('Invalid email or password')
       } else {
-        router.push('/dashboard')
-        router.refresh()
+        await redirectByRole()
       }
     } catch (err) {
       setError('An error occurred. Please try again.')
@@ -63,7 +89,9 @@ export default function LoginPage() {
 
   const handleGoogleSignIn = async () => {
     setLoading(true)
-    await signIn('google', { callbackUrl: '/dashboard' })
+    // For Google, we let NextAuth redirect but intercept via callbackUrl
+    // Using /auth/callback to read role and re-redirect
+    await signIn('google', { callbackUrl: '/auth/role-redirect' })
   }
 
   return (
@@ -80,12 +108,8 @@ export default function LoginPage() {
               className="object-contain"
             />
           </div>
-          <h1 className="text-3xl font-bold text-emerald-900 mb-2">
-            Staff Portal
-          </h1>
-          <p className="text-gray-600">
-            Bosele Kgotla Village Development Committee
-          </p>
+          <h1 className="text-3xl font-bold text-emerald-900 mb-2">Staff Portal</h1>
+          <p className="text-gray-600">Bosele Kgotla Village Development Committee</p>
         </div>
 
         {/* Login Card */}
@@ -99,11 +123,9 @@ export default function LoginPage() {
           )}
 
           <form onSubmit={handleSubmit} className="space-y-5">
-            {/* Email Input */}
+            {/* Email */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Email Address
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                   <EmailIcon />
@@ -119,11 +141,9 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Password Input */}
+            {/* Password */}
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Password
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Password</label>
               <div className="relative">
                 <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none text-gray-400">
                   <LockIcon />
@@ -158,10 +178,7 @@ export default function LoginPage() {
             {/* Remember Me & Forgot Password */}
             <div className="flex items-center justify-between">
               <label className="flex items-center">
-                <input
-                  type="checkbox"
-                  className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500"
-                />
+                <input type="checkbox" className="w-4 h-4 text-emerald-600 border-gray-300 rounded focus:ring-emerald-500" />
                 <span className="ml-2 text-sm text-gray-600">Remember me</span>
               </label>
               <a href="/auth/forgot-password" className="text-sm text-emerald-600 hover:text-emerald-700 font-medium">
@@ -169,7 +186,7 @@ export default function LoginPage() {
               </a>
             </div>
 
-            {/* Submit Button */}
+            {/* Submit */}
             <button
               type="submit"
               disabled={loading}
@@ -178,8 +195,8 @@ export default function LoginPage() {
               {loading ? (
                 <span className="flex items-center justify-center">
                   <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
                   </svg>
                   Signing in...
                 </span>
@@ -192,7 +209,7 @@ export default function LoginPage() {
           {/* Divider */}
           <div className="relative my-6">
             <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-gray-200"></div>
+              <div className="w-full border-t border-gray-200" />
             </div>
             <div className="relative flex justify-center text-sm">
               <span className="px-4 bg-white text-gray-500">Or continue with</span>

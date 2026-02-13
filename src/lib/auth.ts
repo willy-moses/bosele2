@@ -1,10 +1,7 @@
 import { AuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { createClient } from '@supabase/supabase-js'
 import bcrypt from 'bcryptjs'
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL!
-const supabaseServiceKey = process.env.SUPABASE_SERVICE_ROLE_KEY!
+import { supabaseAdmin } from '@/lib/supabase'
 
 export const authOptions: AuthOptions = {
   providers: [
@@ -22,10 +19,7 @@ export const authOptions: AuthOptions = {
             return null
           }
 
-          const supabase = createClient(supabaseUrl, supabaseServiceKey)
-          
-          // ✅ Use staff_users table instead of admin_users
-          const { data, error } = await supabase
+          const { data, error } = await supabaseAdmin
             .from('staff_users')
             .select('*')
             .eq('email', credentials.email)
@@ -49,11 +43,10 @@ export const authOptions: AuthOptions = {
           let isValidPassword = false
           
           if (isHashed) {
-            // Compare hashed password
             isValidPassword = await bcrypt.compare(credentials.password, data.password)
             console.log('🔒 Password check (hashed):', isValidPassword)
           } else {
-            // Compare plain text password (for migration period)
+            // Plain text comparison (for migration period)
             isValidPassword = credentials.password === data.password
             console.log('⚠️  Password check (plain text):', isValidPassword)
           }
@@ -69,7 +62,7 @@ export const authOptions: AuthOptions = {
             id: data.id,
             email: data.email,
             name: data.name || data.username,
-            role: data.role.toLowerCase() // Normalize role to lowercase
+            role: data.role.toLowerCase()
           }
         } catch (error) {
           console.error('❌ Auth error:', error)

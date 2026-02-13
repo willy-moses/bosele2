@@ -1,66 +1,72 @@
 import { NextResponse } from 'next/server'
-import { createClient } from '@supabase/supabase-js'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
+import { supabaseAdmin } from '@/lib/supabase'
 
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
+
+const DAYCARE_ROLES = ['DAY-CARE-PRINCIPAL', 'DAY-CARE-TEACHER']
 
 export async function GET(request) {
   try {
     const session = await getServerSession(authOptions)
-    
+
     if (!session) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey)
+    // Only daycare roles should hit this endpoint
+    const userRole = session.user?.role?.toUpperCase()
+    if (!DAYCARE_ROLES.includes(userRole)) {
+      return NextResponse.json({ error: 'Forbidden' }, { status: 403 })
+    }
 
-    console.log('📊 GET /api/notifications/count called')
 
-    // Get all unread notifications
+    console.log('📊 GET /api/daycare/notifications/count called')
+    console.log('👤 Role:', userRole)
+
+    // Get all unread daycare notifications
     const { data: notifications, error } = await supabase
-      .from('notifications')
+      .from('daycare_notifications')
       .select('*')
       .eq('is_read', false)
 
     if (error) {
-      console.error('❌ Error fetching notifications:', error)
+      console.error('❌ Error fetching daycare notifications:', error)
       throw error
     }
 
-    console.log('📋 Raw notifications:', notifications)
+    console.log('📋 Raw daycare notifications:', notifications)
 
-    // Count by type with detailed logging
-    const contactNotifications = notifications?.filter(n => n.contact_message_id != null) || []
-    const registrationNotifications = notifications?.filter(n => n.registration_id != null) || []
-    
-    const contactCount = contactNotifications.length
-    const registrationCount = registrationNotifications.length
-    const totalCount = notifications?.length || 0
+    // Count by type — adjust field names to match your actual table columns
+    const messageNotifications      = notifications?.filter(n => n.parent_message_id != null) || []
+    const childAlertNotifications   = notifications?.filter(n => n.child_alert_id    != null) || []
 
-    console.log('🔍 Contact notifications:', contactNotifications)
-    console.log('🔍 Registration notifications:', registrationNotifications)
-    console.log('✅ Notification counts:', { 
-      total: totalCount,
-      contact: contactCount, 
-      registration: registrationCount 
+    const messageCount    = messageNotifications.length
+    const childCount      = childAlertNotifications.length
+    const totalCount      = notifications?.length || 0
+
+    console.log('🔍 Message notifications:',     messageNotifications)
+    console.log('🔍 Child alert notifications:', childAlertNotifications)
+    console.log('✅ Daycare notification counts:', {
+      total:    totalCount,
+      message:  messageCount,
+      child:    childCount,
     })
 
-    // Additional debug: Check if notifications exist but with different field names
-    if (totalCount > 0 && registrationCount === 0) {
-      console.log('⚠️ Warning: Total count is', totalCount, 'but no registration notifications found')
+    // Debug helper — warn if totals don't add up as expected
+    if (totalCount > 0 && messageCount === 0 && childCount === 0) {
+      console.log('⚠️ Warning: Total count is', totalCount, 'but no typed notifications found')
       console.log('⚠️ Notification structure sample:', notifications[0])
     }
 
-    return NextResponse.json({ 
-      count: totalCount,
-      contactCount: contactCount,
-      registrationCount: registrationCount,
-      notifications: notifications
+    return NextResponse.json({
+      count:         totalCount,
+      messageCount:  messageCount,
+      childCount:    childCount,
+      notifications: notifications,
     })
   } catch (error) {
-    console.error('❌ Error:', error)
+    console.error('❌ Daycare notifications error:', error)
     return NextResponse.json({ error: error.message }, { status: 500 })
   }
 }

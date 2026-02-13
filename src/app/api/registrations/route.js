@@ -1,10 +1,7 @@
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
-import { createClient } from '@supabase/supabase-js';
-
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+import { supabaseAdmin } from '@/lib/supabase';
 
 export async function GET(request) {
   try {
@@ -19,11 +16,9 @@ export async function GET(request) {
 
     console.log('✅ Session valid:', session.user.email)
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     // First, try the 'registrations' table (the newer one with proper structure)
     console.log('🔍 Fetching from registrations table...')
-    let { data, error } = await supabase
+    let { data, error } = await supabaseAdmin
       .from('registrations')
       .select('*')
       .order('created_at', { ascending: false });
@@ -33,7 +28,7 @@ export async function GET(request) {
       console.log('⚠️ Trying daycare_registrations table...')
       
       // Fallback to daycare_registrations table
-      const result = await supabase
+      const result = await supabaseAdmin
         .from('daycare_registrations')
         .select('*')
         .order('createdAt', { ascending: false });
@@ -78,10 +73,8 @@ export async function DELETE(request) {
 
     console.log('🗑️ Attempting to delete registration:', id)
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     // Check if the registration exists first
-    const { data: existing, error: checkError } = await supabase
+    const { data: existing, error: checkError } = await supabaseAdmin
       .from('registrations')
       .select('*')
       .eq('id', id)
@@ -95,7 +88,7 @@ export async function DELETE(request) {
       console.log('⚠️ Registration not found in registrations table, trying daycare_registrations...')
       
       // Try daycare_registrations table
-      const { data: existingOld, error: checkOldError } = await supabase
+      const { data: existingOld, error: checkOldError } = await supabaseAdmin
         .from('daycare_registrations')
         .select('*')
         .eq('id', id)
@@ -105,7 +98,7 @@ export async function DELETE(request) {
         console.log('✅ Found in daycare_registrations table')
         
         // Delete from daycare_registrations
-        const { error: deleteError } = await supabase
+        const { error: deleteError } = await supabaseAdmin
           .from('daycare_registrations')
           .delete()
           .eq('id', id)
@@ -126,7 +119,7 @@ export async function DELETE(request) {
     console.log('✅ Found registration in registrations table:', existing)
 
     // Delete from registrations table
-    const { error: deleteError } = await supabase
+    const { error: deleteError } = await supabaseAdmin
       .from('registrations')
       .delete()
       .eq('id', id)
@@ -174,10 +167,8 @@ export async function PATCH(request) {
       return NextResponse.json({ error: 'Invalid status value' }, { status: 400 })
     }
 
-    const supabase = createClient(supabaseUrl, supabaseKey);
-
     // Check which table the registration is in
-    const { data: existing, error: checkError } = await supabase
+    const { data: existing, error: checkError } = await supabaseAdmin
       .from('registrations')
       .select('*')
       .eq('id', id)
@@ -187,7 +178,7 @@ export async function PATCH(request) {
       console.log('⚠️ Not found in registrations, trying daycare_registrations...')
       
       // Try updating in daycare_registrations table
-      const { data, error } = await supabase
+      const { data, error } = await supabaseAdmin
         .from('daycare_registrations')
         .update({ 
           status: status,
@@ -207,7 +198,7 @@ export async function PATCH(request) {
     }
 
     // Update in registrations table
-    const { data, error } = await supabase
+    const { data, error } = await supabaseAdmin
       .from('registrations')
       .update({ 
         status: status,

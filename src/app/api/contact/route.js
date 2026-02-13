@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getServerSession } from 'next-auth'
 import { authOptions } from '@/lib/auth'
-import { getSupabaseAdmin } from '@/lib/supabase-server'
+import { supabaseAdmin } from '@/lib/supabase'
 
 export async function GET(request) {
   try {
@@ -16,7 +16,7 @@ export async function GET(request) {
 
     console.log('✅ Session valid:', session.user.email)
 
-    const supabase = getSupabaseAdmin()
+    const supabase = supabaseAdmin
 
     const { data, error } = await supabase
       .from('contact_messages')
@@ -54,7 +54,7 @@ export async function POST(request) {
       )
     }
 
-    const supabase = getSupabaseAdmin()
+    const supabase = supabaseAdmin
 
     // Insert message into database
     const { data, error } = await supabase
@@ -118,7 +118,7 @@ export async function DELETE(request) {
 
     console.log('🗑️ Deleting message:', id)
 
-    const supabase = getSupabaseAdmin()
+    const supabase = supabaseAdmin
 
     const { error } = await supabase
       .from('contact_messages')
@@ -152,7 +152,7 @@ export async function PATCH(request) {
       return NextResponse.json({ error: 'Message ID is required' }, { status: 400 })
     }
 
-    const supabase = getSupabaseAdmin()
+    const supabase = supabaseAdmin
 
     const { data, error } = await supabase
       .from('contact_messages')
