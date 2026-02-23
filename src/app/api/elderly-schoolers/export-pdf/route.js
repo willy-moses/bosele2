@@ -1,3 +1,8 @@
+// ========================================
+// FILE: app/api/elderly-schoolers/export-pdf/route.js
+// PURPOSE: Generate PDF for elderly schoolers (all or filtered by village)
+// ========================================
+
 import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
@@ -15,37 +20,44 @@ export async function POST(request) {
       return NextResponse.json({ error: 'Invalid schoolers data' }, { status: 400 });
 
     // ── Layout ────────────────────────────────────────────────────
-    const PAGE_W   = 595;  // A4 portrait
-    const PAGE_H   = 842;
-    const MARGIN   = 50;
-    const TABLE_W  = PAGE_W - MARGIN * 2;  // 495
+    const PAGE_W   = 842;  // A4 landscape for wider table
+    const PAGE_H   = 595;
+    const MARGIN   = 40;
+    const TABLE_W  = PAGE_W - MARGIN * 2;  // 762
     const CELL_PAD = 5;
     const HDR_H    = 25;
     const ROW_H    = 20;
     const FOOTER_H = 30;
 
     // Emerald colour theme
-    const EMERALD       = hex(  5, 150, 105);  // #059669
-    const EMERALD_DARK  = hex(  4,  90,  64);  // #045a40
-    const EMERALD_LIGHT = hex(209, 250, 229);  // #d1fae5
+    const EMERALD       = hex(  5, 150, 105);
+    const EMERALD_DARK  = hex(  4,  90,  64);
+    const EMERALD_LIGHT = hex(209, 250, 229);
     const WHITE  = rgb(1, 1, 1);
     const BLACK  = rgb(0, 0, 0);
     const GREY   = hex(102, 102, 102);
-    const RED    = hex(185,  28,  28);
     const ORANGE = hex(180,  83,   9);
 
-    // Columns — Name+Age+Grade+Guardian+Contact = 120+40+85+90+80 = 415, Medical Info gets 80 = 495 total
+    // Columns — total must equal TABLE_W (762)
     const COLS = [
-      { label: 'Name',          w: 120 },
+      { label: '#',             w:  30 },
+      { label: 'Name',          w: 130 },
       { label: 'Age',           w:  40 },
-      { label: 'Grade / Level', w:  85 },
-      { label: 'Guardian',      w:  90 },
-      { label: 'Contact',       w:  80 },
-      { label: 'Medical Info',  w:  80 },
+      { label: 'Grade',         w:  80 },
+      { label: 'ID Number',     w: 100 },  // ← new
+      { label: 'Village / Town',w: 110 },  // ← new
+      { label: 'Guardian',      w: 110 },
+      { label: 'Contact',       w:  90 },
+      { label: 'Medical Info',  w:  72 },
     ];
-    // Safety: force last col to fill any rounding gap
+    // Force last col to absorb any rounding gap
     const colDiff = TABLE_W - COLS.reduce((s, c) => s + c.w, 0);
     COLS[COLS.length - 1].w += colDiff;
+
+    // ── Detect if this is a single-village export ─────────────────
+    const uniqueVillages = [...new Set(schoolers.map(s => s.villageTown?.trim()).filter(Boolean))];
+    const isSingleVillage = uniqueVillages.length === 1;
+    const villageName = isSingleVillage ? uniqueVillages[0] : null;
 
     // ── Fonts ─────────────────────────────────────────────────────
     const pdfDoc   = await PDFDocument.create();
@@ -61,7 +73,6 @@ export async function POST(request) {
       return t + '\u2026';
     }
 
-    // ── Draw column header bar ────────────────────────────────────
     function drawTableHeader(p, topY) {
       p.drawRectangle({ x: MARGIN, y: topY, width: TABLE_W, height: HDR_H, color: EMERALD });
       let x = MARGIN;
@@ -69,27 +80,27 @@ export async function POST(request) {
         p.drawText(col.label, {
           x: x + CELL_PAD,
           y: topY + (HDR_H - 10) / 2,
-          size: 10, font: fontBold, color: WHITE,
+          size: 9, font: fontBold, color: WHITE,
         });
         x += col.w;
       }
     }
 
-    // ── Draw a data row ───────────────────────────────────────────
     function drawRow(p, rowY, schooler, index) {
       if (index % 2 === 0) {
         p.drawRectangle({ x: MARGIN, y: rowY, width: TABLE_W, height: ROW_H, color: EMERALD_LIGHT });
       }
 
-      const medicalText = schooler.medicalInfo
-        ? clip(schooler.medicalInfo, COLS[5].w, 9, font)
-        : 'None';
+      const medicalText  = schooler.medicalInfo ? clip(schooler.medicalInfo, COLS[8].w, 9, font) : 'None';
       const medicalColor = schooler.medicalInfo ? ORANGE : GREY;
 
       const cells = [
+        String(index + 1),
         schooler.name             || '—',
         String(schooler.age       || '—'),
         schooler.grade            || '—',
+        schooler.idNumber         || '—',   // ← new
+        schooler.villageTown      || '—',   // ← new
         schooler.guardianName     || '—',
         schooler.guardianContact  || '—',
         medicalText,
@@ -97,7 +108,7 @@ export async function POST(request) {
 
       let x = MARGIN;
       cells.forEach((cell, i) => {
-        const color = i === 5 ? medicalColor : BLACK;
+        const color = i === 8 ? medicalColor : BLACK;
         p.drawText(clip(cell, COLS[i].w, 9, font), {
           x: x + CELL_PAD,
           y: rowY + (ROW_H - 9) / 2,
@@ -111,20 +122,25 @@ export async function POST(request) {
     let page = pdfDoc.addPage([PAGE_W, PAGE_H]);
     let y = PAGE_H - MARGIN;
 
+    // Organisation name
     const title = 'Bosele Kgotla';
     page.drawText(title, {
       x: MARGIN + (TABLE_W - fontBold.widthOfTextAtSize(title, 20)) / 2,
       y, size: 20, font: fontBold, color: EMERALD,
     });
-    y -= 28;
+    y -= 26;
 
-    const subtitle = 'Elderly Schoolers Register';
+    // Register title — includes village name if filtered
+    const subtitle = isSingleVillage
+      ? `Elderly Schoolers Register — ${villageName}`
+      : 'Elderly Schoolers Register';
     page.drawText(subtitle, {
-      x: MARGIN + (TABLE_W - fontBold.widthOfTextAtSize(subtitle, 14)) / 2,
-      y, size: 14, font: fontBold, color: EMERALD_DARK,
+      x: MARGIN + (TABLE_W - fontBold.widthOfTextAtSize(subtitle, 13)) / 2,
+      y, size: 13, font: fontBold, color: EMERALD_DARK,
     });
-    y -= 22;
+    y -= 20;
 
+    // Date
     const dateStr = `Generated on ${new Date().toLocaleDateString('en-US', {
       year: 'numeric', month: 'long', day: 'numeric',
     })}`;
@@ -132,20 +148,19 @@ export async function POST(request) {
       x: MARGIN + (TABLE_W - font.widthOfTextAtSize(dateStr, 9)) / 2,
       y, size: 9, font, color: GREY,
     });
-    y -= 30;
+    y -= 22;
 
     // Summary stats
     const avgAge = schoolers.length > 0
       ? Math.round(schoolers.reduce((sum, s) => sum + Number(s.age || 0), 0) / schoolers.length)
       : 0;
     const medicalCount = schoolers.filter(s => s.medicalInfo).length;
-
     const summary = `Total: ${schoolers.length}   Average Age: ${avgAge}   With Medical Info: ${medicalCount}`;
     page.drawText(summary, {
       x: MARGIN + (TABLE_W - font.widthOfTextAtSize(summary, 9)) / 2,
       y, size: 9, font, color: GREY,
     });
-    y -= 36;
+    y -= 28;
 
     // Table header
     drawTableHeader(page, y);
@@ -167,7 +182,8 @@ export async function POST(request) {
     const totalPages = pdfDoc.getPageCount();
     for (let i = 0; i < totalPages; i++) {
       const p = pdfDoc.getPage(i);
-      const footerText = `Bosele Kgotla  •  Page ${i + 1} of ${totalPages}  •  Confidential`;
+      const villageLabel = isSingleVillage ? `  •  ${villageName}` : '';
+      const footerText = `Bosele Kgotla${villageLabel}  •  Page ${i + 1} of ${totalPages}  •  Confidential`;
       p.drawText(footerText, {
         x: MARGIN + (TABLE_W - font.widthOfTextAtSize(footerText, 7)) / 2,
         y: MARGIN - 15,
@@ -185,7 +201,7 @@ export async function POST(request) {
     });
 
   } catch (error) {
-    console.error('Error generating schoolers PDF:', error);
+    console.error('❌ Error generating schoolers PDF:', error);
     return NextResponse.json({ error: 'Failed to generate PDF' }, { status: 500 });
   }
 }
