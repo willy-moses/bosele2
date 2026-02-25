@@ -1,10 +1,15 @@
 import { AuthOptions } from 'next-auth'
 import CredentialsProvider from 'next-auth/providers/credentials'
+import GoogleProvider from 'next-auth/providers/google'
 import bcrypt from 'bcryptjs'
 import { supabaseAdmin } from '@/lib/supabase'
 
 export const authOptions: AuthOptions = {
   providers: [
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+    }),
     CredentialsProvider({
       name: 'Credentials',
       credentials: {
@@ -37,16 +42,13 @@ export const authOptions: AuthOptions = {
 
           console.log('✅ User found:', data.email, 'Role:', data.role)
 
-          // Check if password is hashed (bcrypt hashes start with $2a$ or $2b$)
           const isHashed = data.password.startsWith('$2')
-          
           let isValidPassword = false
           
           if (isHashed) {
             isValidPassword = await bcrypt.compare(credentials.password, data.password)
             console.log('🔒 Password check (hashed):', isValidPassword)
           } else {
-            // Plain text comparison (for migration period)
             isValidPassword = credentials.password === data.password
             console.log('⚠️  Password check (plain text):', isValidPassword)
           }
@@ -71,14 +73,43 @@ export const authOptions: AuthOptions = {
       }
     })
   ],
+
   session: {
     strategy: 'jwt' as const,
-    maxAge: 30 * 24 * 60 * 60, // 30 days
+    maxAge: 30 * 24 * 60 * 60,
   },
+
   pages: {
-    signIn: '/admin/login',
+    signIn: '/auth/login',
   },
+
   callbacks: {
+    // ── After Google sign-in, look up the user's role in staff_users ──
+    async signIn({ user, account }) {
+      if (account?.provider === 'google') {
+        try {
+          const { data } = await supabaseAdmin
+            .from('staff_users')
+            .select('role')
+            .eq('email', user.email!)
+            .single()
+
+          if (!data) {
+            // Email not in staff_users — deny access
+            console.log('❌ Google sign-in denied: not a staff member:', user.email)
+            return '/auth/login?error=AccessDenied'
+          }
+
+          // Attach role so jwt callback can pick it up
+          user.role = data.role.toLowerCase()
+          console.log('✅ Google sign-in allowed:', user.email, 'Role:', user.role)
+        } catch {
+          return '/auth/login?error=AccessDenied'
+        }
+      }
+      return true
+    },
+
     async jwt({ token, user }) {
       if (user) {
         token.id = user.id
@@ -88,6 +119,7 @@ export const authOptions: AuthOptions = {
       }
       return token
     },
+
     async session({ session, token }) {
       if (token && session.user) {
         session.user.id = token.id
@@ -96,8 +128,16 @@ export const authOptions: AuthOptions = {
         session.user.name = token.name!
       }
       return session
-    }
+    },
+
+    // ── Send Google users to role-redirect; leave everything else alone ──
+    async redirect({ url, baseUrl }) {
+      if (url.startsWith(baseUrl)) return url
+      if (url.startsWith('/')) return `${baseUrl}${url}`
+      return baseUrl
+    },
   },
+
   secret: process.env.NEXTAUTH_SECRET,
-  debug: process.env.NODE_ENV === 'development'
+  debug: process.env.NODE_ENV === 'development',
 }

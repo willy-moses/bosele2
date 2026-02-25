@@ -1,6 +1,6 @@
 // ========================================
 // FILE: app/api/elderly-people/[id]/route.js
-// PURPOSE: PUT update, DELETE individual elderly person record
+// PURPOSE: PUT update, DELETE — with categories support
 // ========================================
 
 import { NextResponse } from 'next/server';
@@ -17,6 +17,7 @@ export async function PUT(request, { params }) {
     const body = await request.json();
     const {
       firstName, lastName, idNumber, dateOfBirth, age, gender,
+      categories,                                          // ← new
       villageTown, district, address, phone,
       nextOfKinName, nextOfKinPhone, nextOfKinRelationship,
       medicalInfo, notes,
@@ -29,7 +30,14 @@ export async function PUT(request, { params }) {
       );
     }
 
-    // Check exists
+    if (!categories || categories.length === 0) {
+      return NextResponse.json(
+        { error: 'At least one category must be selected' },
+        { status: 400 }
+      );
+    }
+
+    // Check record exists
     const { data: existing, error: checkError } = await supabaseAdmin
       .from('elderly_people')
       .select('id')
@@ -40,7 +48,7 @@ export async function PUT(request, { params }) {
       return NextResponse.json({ error: 'Record not found' }, { status: 404 });
     }
 
-    // ── Duplicate ID check (exclude self) ─────────────────────────
+    // Duplicate ID check (exclude self)
     if (idNumber && idNumber.trim() !== '') {
       const { data: duplicate } = await supabaseAdmin
         .from('elderly_people')
@@ -70,6 +78,7 @@ export async function PUT(request, { params }) {
         date_of_birth:            dateOfBirth           || null,
         age:                      age ? parseInt(age)   : null,
         gender:                   gender                || null,
+        categories:               categories            || [],   // ← new
         village_town:             villageTown,
         district:                 district              || null,
         address:                  address               || null,
@@ -79,7 +88,7 @@ export async function PUT(request, { params }) {
         next_of_kin_relationship: nextOfKinRelationship || null,
         medical_info:             medicalInfo           || null,
         notes:                    notes                 || null,
-        updated_at: new Date().toISOString(),
+        updated_at:               new Date().toISOString(),
       })
       .eq('id', id)
       .select()

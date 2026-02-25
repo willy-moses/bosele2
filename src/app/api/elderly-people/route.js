@@ -1,6 +1,6 @@
 // ========================================
 // FILE: app/api/elderly-people/route.js
-// PURPOSE: GET all elderly people, POST new record
+// PURPOSE: GET all records, POST new record — with categories support
 // ========================================
 
 import { NextResponse } from 'next/server';
@@ -23,7 +23,6 @@ export async function GET(request) {
       return NextResponse.json({ error: 'Failed to fetch records' }, { status: 500 });
     }
 
-    // Map snake_case → camelCase for the frontend
     const people = (data || []).map(p => ({
       id:                    p.id,
       firstName:             p.first_name,
@@ -32,6 +31,7 @@ export async function GET(request) {
       dateOfBirth:           p.date_of_birth,
       age:                   p.age,
       gender:                p.gender,
+      categories:            p.categories || [],        // ← new
       villageTown:           p.village_town,
       district:              p.district,
       address:               p.address,
@@ -43,7 +43,7 @@ export async function GET(request) {
       notes:                 p.notes,
       createdAt:             p.created_at,
       updatedAt:             p.updated_at,
-    }))
+    }));
 
     return NextResponse.json({ people }, { status: 200 });
   } catch (error) {
@@ -60,6 +60,7 @@ export async function POST(request) {
     const body = await request.json();
     const {
       firstName, lastName, idNumber, dateOfBirth, age, gender,
+      categories,                                        // ← new
       villageTown, district, address, phone,
       nextOfKinName, nextOfKinPhone, nextOfKinRelationship,
       medicalInfo, notes,
@@ -72,7 +73,14 @@ export async function POST(request) {
       );
     }
 
-    // ── Duplicate check on ID number ──────────────────────────────
+    if (!categories || categories.length === 0) {
+      return NextResponse.json(
+        { error: 'At least one category must be selected' },
+        { status: 400 }
+      );
+    }
+
+    // Duplicate check on ID number
     if (idNumber && idNumber.trim() !== '') {
       const { data: existing } = await supabaseAdmin
         .from('elderly_people')
@@ -95,21 +103,22 @@ export async function POST(request) {
     const { data, error } = await supabaseAdmin
       .from('elderly_people')
       .insert([{
-        first_name:              firstName,
-        last_name:               lastName,
-        id_number:               idNumber              || null,
-        date_of_birth:           dateOfBirth           || null,
-        age:                     age ? parseInt(age)   : null,
-        gender:                  gender                || null,
-        village_town:            villageTown,
-        district:                district              || null,
-        address:                 address               || null,
-        phone:                   phone                 || null,
-        next_of_kin_name:        nextOfKinName         || null,
-        next_of_kin_phone:       nextOfKinPhone        || null,
-        next_of_kin_relationship:nextOfKinRelationship || null,
-        medical_info:            medicalInfo           || null,
-        notes:                   notes                 || null,
+        first_name:               firstName,
+        last_name:                lastName,
+        id_number:                idNumber              || null,
+        date_of_birth:            dateOfBirth           || null,
+        age:                      age ? parseInt(age)   : null,
+        gender:                   gender                || null,
+        categories:               categories            || [],   // ← new
+        village_town:             villageTown,
+        district:                 district              || null,
+        address:                  address               || null,
+        phone:                    phone                 || null,
+        next_of_kin_name:         nextOfKinName         || null,
+        next_of_kin_phone:        nextOfKinPhone        || null,
+        next_of_kin_relationship: nextOfKinRelationship || null,
+        medical_info:             medicalInfo           || null,
+        notes:                    notes                 || null,
       }])
       .select()
       .single();
