@@ -37,6 +37,12 @@ export default function Resources() {
       description: 'Register your child at Bosele Day Care Center', 
       file: '/daycare-registration.pdf' 
     },
+    { 
+      id: 2, 
+      title: 'Proof of Residence Form', 
+      description: 'Official form to obtain proof of residence from the kgotla office', 
+      file: '/proof-of-residence.pdf' 
+    },
   ]
 
   const handleDownload = async (filePath, fileName) => {

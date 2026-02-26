@@ -5,6 +5,7 @@ import UserManagement from './UserManagement'
 import MessagesManagement from './MessagesManagement'
 import ElderlySchoolersManagement from './ElderlySchoolersManagement'
 import ElderlyPeopleManagement from './elderly-people/ElderlyPeopleManagement'
+import SanPeopleManagement from './san-people/SanPeopleManagement'   // ← NEW IMPORT
 
 export default function StaffDashboard({ user }) {
   
@@ -12,7 +13,6 @@ export default function StaffDashboard({ user }) {
   const [notificationCount, setNotificationCount] = useState(0)
   const [contactNotifications, setContactNotifications] = useState(0)
 
-  // Debug logging
   console.log('👤 Current user:', user)
   console.log('👤 User role:', user.role)
   console.log('👤 Role uppercase:', user.role?.toUpperCase())
@@ -38,10 +38,6 @@ export default function StaffDashboard({ user }) {
       const data = await res.json()
       setNotificationCount(data.count || 0)
       setContactNotifications(data.contactCount || 0)
-      console.log('📊 Updated notification counts:', {
-        total: data.count || 0,
-        contact: data.contactCount || 0
-      })
     } catch (error) {
       console.error('Error fetching notification count:', error)
     }
@@ -49,15 +45,13 @@ export default function StaffDashboard({ user }) {
 
   const isAdmin = user.role?.toUpperCase() === 'ADMIN'
 
-  console.log('🔴 Contact Notifications State:', contactNotifications)
-  console.log('🔔 Total Notification Count:', notificationCount)
-
   // Tab definitions — label + optional notification source
   const tabs = [
     { id: 'overview',          label: 'Overview' },
     { id: 'messages',          label: 'Messages',          badge: contactNotifications },
     { id: 'elderly-schoolers', label: 'Elderly Schoolers' },
-    { id: 'elderly-people',    label: 'Elderly People' },  // ← new
+    { id: 'elderly-people',    label: 'Elderly People' },
+    { id: 'san-people',        label: 'San / Basarwa' },   // ← NEW TAB
     { id: 'users',             label: 'Users' },
     { id: 'content',           label: 'Content' },
     { id: 'settings',          label: 'Settings' },
@@ -159,6 +153,10 @@ export default function StaffDashboard({ user }) {
         {activeTab === 'elderly-schoolers' && <ElderlySchoolersManagement />}
 
         {activeTab === 'elderly-people' && <ElderlyPeopleManagement />}
+
+        {/* ── NEW TAB CONTENT ────────────────────────────────────────── */}
+        {activeTab === 'san-people' && <SanPeopleManagement />}
+        {/* ─────────────────────────────────────────────────────────── */}
 
         {activeTab === 'users' && isAdmin && <UserManagement />}
 
