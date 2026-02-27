@@ -5,10 +5,11 @@ import UserManagement from './UserManagement'
 import MessagesManagement from './MessagesManagement'
 import ElderlySchoolersManagement from './ElderlySchoolersManagement'
 import ElderlyPeopleManagement from './elderly-people/ElderlyPeopleManagement'
-import SanPeopleManagement from './san-people/SanPeopleManagement'   // ← NEW IMPORT
+import SanPeopleManagement from './san-people/SanPeopleManagement'
+import VdcManagement from './Vdc tools/VdcManagement'   // ← NEW IMPORT
 
 export default function StaffDashboard({ user }) {
-  
+
   const [activeTab, setActiveTab] = useState('overview')
   const [notificationCount, setNotificationCount] = useState(0)
   const [contactNotifications, setContactNotifications] = useState(0)
@@ -20,11 +21,11 @@ export default function StaffDashboard({ user }) {
 
   useEffect(() => {
     fetchNotificationCount()
-    
+
     const handleNotificationUpdate = () => {
       fetchNotificationCount()
     }
-    
+
     window.addEventListener('notificationUpdate', handleNotificationUpdate)
     return () => {
       window.removeEventListener('notificationUpdate', handleNotificationUpdate)
@@ -45,13 +46,14 @@ export default function StaffDashboard({ user }) {
 
   const isAdmin = user.role?.toUpperCase() === 'ADMIN'
 
-  // Tab definitions — label + optional notification source
+  // Tab definitions — label + optional notification badge source
   const tabs = [
     { id: 'overview',          label: 'Overview' },
     { id: 'messages',          label: 'Messages',          badge: contactNotifications },
     { id: 'elderly-schoolers', label: 'Elderly Schoolers' },
     { id: 'elderly-people',    label: 'Elderly People' },
-    { id: 'san-people',        label: 'San / Basarwa' },   // ← NEW TAB
+    { id: 'san-people',        label: 'San / Basarwa' },
+    { id: 'vdc-items',         label: 'VDC Items & Tools' }, // ← NEW TAB
     { id: 'users',             label: 'Users' },
     { id: 'content',           label: 'Content' },
     { id: 'settings',          label: 'Settings' },
@@ -59,7 +61,8 @@ export default function StaffDashboard({ user }) {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
+
+      {/* ── Header ────────────────────────────────────────────────────── */}
       <header className="bg-white shadow-sm">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
           <div className="flex justify-between items-center">
@@ -68,11 +71,13 @@ export default function StaffDashboard({ user }) {
               <p className="text-sm text-gray-600">Welcome, {user.name}</p>
             </div>
             <div className="flex items-center gap-4">
+
               {/* Notification Bell */}
               <div className="relative">
                 <button className="relative p-2 text-gray-600 hover:text-gray-900">
                   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
+                      d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                   </svg>
                   {notificationCount > 0 && (
                     <span className="absolute -top-1 -right-1 bg-red-600 text-white text-xs font-bold rounded-full h-5 w-5 flex items-center justify-center">
@@ -85,6 +90,7 @@ export default function StaffDashboard({ user }) {
               <span className="px-3 py-1 bg-emerald-100 text-emerald-800 rounded-full text-sm font-medium">
                 {user.role}
               </span>
+
               <button
                 onClick={() => signOut({ callbackUrl: '/' })}
                 className="px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors"
@@ -96,7 +102,7 @@ export default function StaffDashboard({ user }) {
         </div>
       </header>
 
-      {/* Navigation Tabs */}
+      {/* ── Navigation Tabs ────────────────────────────────────────────── */}
       <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <nav className="flex space-x-6 overflow-x-auto">
@@ -122,9 +128,10 @@ export default function StaffDashboard({ user }) {
         </div>
       </div>
 
-      {/* Content */}
+      {/* ── Main Content ───────────────────────────────────────────────── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
+        {/* Overview */}
         {activeTab === 'overview' && (
           <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
             <div className="bg-white p-6 rounded-lg shadow">
@@ -148,25 +155,35 @@ export default function StaffDashboard({ user }) {
           </div>
         )}
 
+        {/* Messages */}
         {activeTab === 'messages' && <MessagesManagement />}
 
+        {/* Elderly Schoolers */}
         {activeTab === 'elderly-schoolers' && <ElderlySchoolersManagement />}
 
+        {/* Elderly People */}
         {activeTab === 'elderly-people' && <ElderlyPeopleManagement />}
 
-        {/* ── NEW TAB CONTENT ────────────────────────────────────────── */}
+        {/* San / Basarwa People */}
         {activeTab === 'san-people' && <SanPeopleManagement />}
-        {/* ─────────────────────────────────────────────────────────── */}
 
+        {/* VDC Items & Tools ── NEW */}
+        {activeTab === 'vdc-items' && <VdcManagement />}
+
+        {/* Users — admin only */}
         {activeTab === 'users' && isAdmin && <UserManagement />}
-
         {activeTab === 'users' && !isAdmin && (
           <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-            <p className="text-yellow-800">You don't have permission to manage users. Only ADMIN users can access this section.</p>
-            <p className="text-sm text-yellow-700 mt-2">Your current role: <span className="font-semibold">{user.role}</span></p>
+            <p className="text-yellow-800">
+              You don't have permission to manage users. Only ADMIN users can access this section.
+            </p>
+            <p className="text-sm text-yellow-700 mt-2">
+              Your current role: <span className="font-semibold">{user.role}</span>
+            </p>
           </div>
         )}
 
+        {/* Content */}
         {activeTab === 'content' && (
           <div className="bg-white p-6 rounded-lg shadow">
             <h2 className="text-xl font-semibold mb-4">Content Management</h2>
@@ -174,6 +191,7 @@ export default function StaffDashboard({ user }) {
           </div>
         )}
 
+        {/* Settings */}
         {activeTab === 'settings' && (
           <div className="bg-white p-6 rounded-lg shadow">
             <h2 className="text-xl font-semibold mb-4">Settings</h2>

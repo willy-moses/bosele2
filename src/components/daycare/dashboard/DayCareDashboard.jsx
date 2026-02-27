@@ -4,26 +4,30 @@ import { useState, useEffect, useCallback } from 'react'
 import { User, Mail, Phone, MapPin, Calendar, Baby, FileText, X, Trash2, Eye, Briefcase, AlertCircle, Heart, Clock, CheckCircle, RefreshCw, Edit } from 'lucide-react'
 import ChildrenManagement from '../ChildrenManagement'
 import StaffManagement from '../StaffManagement'
+import DaycareItemsManagement from './DaycareItemsManagement'
+import SchoolFeesManagement from '../SchoolFeesManagement'
 
-// ─── Role constants (underscores to match DB) ───────────────────────────────────
+// ─── Role constants (underscores to match DB) ────────────────────────────────
 const ROLES = {
   PRINCIPAL: 'DAY_CARE_PRINCIPAL',
   TEACHER:   'DAY_CARE_TEACHER',
 }
 
-// ─── Tab definitions ─────────────────────────────────────────────────────────────
+// ─── Tab definitions ──────────────────────────────────────────────────────────
 const ALL_TABS = [
-  { id: 'overview',      label: 'Overview',      roles: [ROLES.PRINCIPAL, ROLES.TEACHER] },
-  { id: 'registrations', label: 'Registrations', roles: [ROLES.PRINCIPAL, ROLES.TEACHER] },
-  { id: 'children',      label: 'Children',      roles: [ROLES.PRINCIPAL, ROLES.TEACHER] },
-  { id: 'attendance',    label: 'Attendance',    roles: [ROLES.PRINCIPAL, ROLES.TEACHER] },
-  { id: 'lessons',       label: 'Lessons',       roles: [ROLES.PRINCIPAL, ROLES.TEACHER] },
-  { id: 'staff',         label: 'Staff',         roles: [ROLES.PRINCIPAL] },
-  { id: 'reports',       label: 'Reports',       roles: [ROLES.PRINCIPAL] },
-  { id: 'settings',      label: 'Settings',      roles: [ROLES.PRINCIPAL] },
+  { id: 'overview',      label: 'Overview',        roles: [ROLES.PRINCIPAL, ROLES.TEACHER] },
+  { id: 'registrations', label: 'Registrations',   roles: [ROLES.PRINCIPAL, ROLES.TEACHER] },
+  { id: 'children',      label: 'Children',        roles: [ROLES.PRINCIPAL, ROLES.TEACHER] },
+  { id: 'attendance',    label: 'Attendance',      roles: [ROLES.PRINCIPAL, ROLES.TEACHER] },
+  { id: 'lessons',       label: 'Lessons',         roles: [ROLES.PRINCIPAL, ROLES.TEACHER] },
+  { id: 'items',         label: 'Items & Tools',   roles: [ROLES.PRINCIPAL, ROLES.TEACHER] },
+  { id: 'fees',          label: 'School Fees',     roles: [ROLES.PRINCIPAL] },            // ← NEW
+  { id: 'staff',         label: 'Staff',           roles: [ROLES.PRINCIPAL] },
+  { id: 'reports',       label: 'Reports',         roles: [ROLES.PRINCIPAL] },
+  { id: 'settings',      label: 'Settings',        roles: [ROLES.PRINCIPAL] },
 ]
 
-// ─── Helpers ──────────────────────────────────────────────────────────────────────
+// ─── Helpers ──────────────────────────────────────────────────────────────────
 function roleBadgeClass(role) {
   switch (role?.toUpperCase()) {
     case ROLES.PRINCIPAL: return 'bg-amber-100 text-amber-800 border border-amber-300'
@@ -61,7 +65,7 @@ function StatusBadge({ status }) {
   )
 }
 
-// ─── Icons ────────────────────────────────────────────────────────────────────────
+// ─── Icons ────────────────────────────────────────────────────────────────────
 const IconBell = () => (
   <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
     <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2}
@@ -69,7 +73,7 @@ const IconBell = () => (
   </svg>
 )
 
-// ─── Stat Card ────────────────────────────────────────────────────────────────────
+// ─── Stat Card ────────────────────────────────────────────────────────────────
 function StatCard({ label, value, color, ping }) {
   const colorMap = {
     amber:   'text-amber-600',
@@ -77,6 +81,7 @@ function StatCard({ label, value, color, ping }) {
     orange:  'text-orange-600',
     rose:    'text-rose-600',
     emerald: 'text-emerald-600',
+    green:   'text-green-600',
   }
   return (
     <div className="bg-white rounded-2xl shadow-sm border border-amber-50 p-6 relative">
@@ -92,7 +97,7 @@ function StatCard({ label, value, color, ping }) {
   )
 }
 
-// ─── Registrations Management (INTEGRATED & IMPROVED) ─────────────────────────────
+// ─── Registrations Management ─────────────────────────────────────────────────
 function RegistrationsManagement() {
   const [registrations, setRegistrations] = useState([])
   const [loading, setLoading] = useState(true)
@@ -106,16 +111,9 @@ function RegistrationsManagement() {
     try {
       setLoading(true)
       setError(null)
-      
-      const res = await fetch('/api/registrations', {
-        cache: 'no-store'
-      })
+      const res = await fetch('/api/registrations', { cache: 'no-store' })
       const data = await res.json()
-      
-      if (!res.ok || data.error) {
-        throw new Error(data.error || 'Failed to fetch registrations')
-      }
-      
+      if (!res.ok || data.error) throw new Error(data.error || 'Failed to fetch registrations')
       let registrationsArray = Array.isArray(data) ? data : (data.registrations || [])
       setRegistrations(registrationsArray)
     } catch (error) {
@@ -127,23 +125,16 @@ function RegistrationsManagement() {
     }
   }, [])
 
-  useEffect(() => {
-    fetchRegistrations()
-  }, [fetchRegistrations])
+  useEffect(() => { fetchRegistrations() }, [fetchRegistrations])
 
   const handleViewRegistration = async (registration) => {
     setSelectedRegistration(registration)
-    
     try {
       await fetch('/api/notifications/mark-read', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          reference_id: registration.id,
-          reference_type: 'registration'
-        })
+        body: JSON.stringify({ reference_id: registration.id, reference_type: 'registration' })
       })
-      
       window.dispatchEvent(new Event('notificationUpdate'))
     } catch (error) {
       console.error('Error marking notification as read:', error)
@@ -152,43 +143,25 @@ function RegistrationsManagement() {
 
   const handleApproveRegistration = async (id) => {
     if (!confirm('Are you sure you want to approve this registration?')) return
-
     setActionLoading(true)
     try {
       const res = await fetch('/api/registrations', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          id: id,
-          status: 'approved'
-        })
+        body: JSON.stringify({ id, status: 'approved' })
       })
-
       const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to approve registration')
-      }
-
+      if (!res.ok) throw new Error(data.error || 'Failed to approve registration')
       await fetch('/api/notifications/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          reference_id: id,
-          reference_type: 'registration'
-        })
+        body: JSON.stringify({ reference_id: id, reference_type: 'registration' })
       })
-
       window.dispatchEvent(new Event('notificationUpdate'))
       await fetchRegistrations()
-
-      if (selectedRegistration?.id === id) {
-        setSelectedRegistration(null)
-      }
-
+      if (selectedRegistration?.id === id) setSelectedRegistration(null)
       alert('Registration approved successfully!')
     } catch (error) {
-      console.error('❌ Error approving registration:', error)
       alert('Failed to approve registration: ' + error.message)
     } finally {
       setActionLoading(false)
@@ -197,36 +170,21 @@ function RegistrationsManagement() {
 
   const handleDeleteRegistration = async (id) => {
     if (!confirm('Are you sure you want to delete this registration? This action cannot be undone.')) return
-
     setActionLoading(true)
     try {
       await fetch('/api/notifications/delete', {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          reference_id: id,
-          reference_type: 'registration'
-        })
+        body: JSON.stringify({ reference_id: id, reference_type: 'registration' })
       })
-
-      const res = await fetch(`/api/registrations?id=${id}`, {
-        method: 'DELETE'
-      })
-
+      const res = await fetch(`/api/registrations?id=${id}`, { method: 'DELETE' })
       const data = await res.json()
-
-      if (!res.ok) {
-        throw new Error(data.error || 'Failed to delete registration')
-      }
-
+      if (!res.ok) throw new Error(data.error || 'Failed to delete registration')
       window.dispatchEvent(new Event('notificationUpdate'))
       await fetchRegistrations()
-
       setSelectedRegistration(null)
-
       alert('Registration deleted successfully!')
     } catch (error) {
-      console.error('❌ Error deleting registration:', error)
       alert('Failed to delete registration: ' + error.message)
     } finally {
       setActionLoading(false)
@@ -247,65 +205,45 @@ function RegistrationsManagement() {
       <div className="bg-red-50 border border-red-200 text-red-700 rounded-lg p-4">
         <p className="font-semibold">Error loading registrations</p>
         <p className="text-sm">{error}</p>
-        <button 
-          onClick={fetchRegistrations}
-          className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700"
-        >
-          Retry
-        </button>
+        <button onClick={fetchRegistrations} className="mt-2 px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">Retry</button>
       </div>
     )
   }
 
   return (
     <div className="space-y-6">
-      {/* Header */}
       <div className="bg-white rounded-lg shadow p-6 border-b-4 border-emerald-500">
         <div className="flex items-center justify-between">
           <div>
             <h2 className="text-2xl font-bold text-gray-900">Daycare Registrations</h2>
             <p className="text-gray-600 mt-1">Manage and review all daycare registration applications</p>
           </div>
-          <button
-            onClick={fetchRegistrations}
-            disabled={loading}
-            className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50"
-          >
+          <button onClick={fetchRegistrations} disabled={loading}
+            className="inline-flex items-center px-4 py-2 bg-emerald-600 text-white rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50">
             <RefreshCw className={`h-4 w-4 mr-2 ${loading ? 'animate-spin' : ''}`} />
             Refresh
           </button>
         </div>
-        
-        {/* Stats */}
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4 mt-6">
           <div className="bg-gradient-to-br from-blue-50 to-blue-100 rounded-lg p-4 border border-blue-200">
             <p className="text-sm text-blue-600 font-semibold">Total</p>
-            <p className="text-2xl font-bold text-blue-900">
-              {safeRegistrations.length}
-            </p>
+            <p className="text-2xl font-bold text-blue-900">{safeRegistrations.length}</p>
           </div>
           <div className="bg-gradient-to-br from-yellow-50 to-yellow-100 rounded-lg p-4 border border-yellow-200">
             <p className="text-sm text-yellow-600 font-semibold">Pending</p>
-            <p className="text-2xl font-bold text-yellow-900">
-              {safeRegistrations.filter(r => r.status === 'pending').length}
-            </p>
+            <p className="text-2xl font-bold text-yellow-900">{safeRegistrations.filter(r => r.status === 'pending').length}</p>
           </div>
           <div className="bg-gradient-to-br from-green-50 to-green-100 rounded-lg p-4 border border-green-200">
             <p className="text-sm text-green-600 font-semibold">Approved</p>
-            <p className="text-2xl font-bold text-green-900">
-              {safeRegistrations.filter(r => r.status === 'approved').length}
-            </p>
+            <p className="text-2xl font-bold text-green-900">{safeRegistrations.filter(r => r.status === 'approved').length}</p>
           </div>
           <div className="bg-gradient-to-br from-purple-50 to-purple-100 rounded-lg p-4 border border-purple-200">
             <p className="text-sm text-purple-600 font-semibold">Waitlist</p>
-            <p className="text-2xl font-bold text-purple-900">
-              {safeRegistrations.filter(r => r.status === 'waitlist').length}
-            </p>
+            <p className="text-2xl font-bold text-purple-900">{safeRegistrations.filter(r => r.status === 'waitlist').length}</p>
           </div>
         </div>
       </div>
 
-      {/* Registrations Table */}
       <div className="bg-white rounded-lg shadow overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
@@ -339,64 +277,41 @@ function RegistrationsManagement() {
                           <User className="h-5 w-5 text-emerald-600" />
                         </div>
                         <div className="ml-3">
-                          <p className="font-medium text-gray-900">
-                            {reg.parent_name || reg.parentName || 'N/A'}
-                          </p>
+                          <p className="font-medium text-gray-900">{reg.parent_name || reg.parentName || 'N/A'}</p>
                         </div>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="flex items-center">
                         <Baby className="h-4 w-4 text-blue-500 mr-2" />
-                        <span className="font-medium text-gray-900">
-                          {reg.child_name || reg.childName || 'N/A'}
-                        </span>
+                        <span className="font-medium text-gray-900">{reg.child_name || reg.childName || 'N/A'}</span>
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
                       <div className="text-sm">
-                        <p className="text-gray-900 flex items-center">
-                          <Mail className="h-3 w-3 mr-1 text-gray-400" />
-                          {reg.email || 'N/A'}
-                        </p>
-                        <p className="text-gray-500 flex items-center mt-1">
-                          <Phone className="h-3 w-3 mr-1 text-gray-400" />
-                          {reg.phone || 'N/A'}
-                        </p>
+                        <p className="text-gray-900 flex items-center"><Mail className="h-3 w-3 mr-1 text-gray-400" />{reg.email || 'N/A'}</p>
+                        <p className="text-gray-500 flex items-center mt-1"><Phone className="h-3 w-3 mr-1 text-gray-400" />{reg.phone || 'N/A'}</p>
                       </div>
                     </td>
-                    <td className="px-6 py-4 whitespace-nowrap">
-                      <StatusBadge status={reg.status} />
-                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap"><StatusBadge status={reg.status} /></td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-600">
                       {new Date(reg.created_at || reg.createdAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                       <div className="flex items-center justify-end gap-2">
-                        <button
-                          onClick={() => handleViewRegistration(reg)}
-                          className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors"
-                        >
-                          <Eye className="h-4 w-4 mr-1" />
-                          View
+                        <button onClick={() => handleViewRegistration(reg)}
+                          className="inline-flex items-center px-3 py-1.5 bg-blue-50 text-blue-600 rounded-lg hover:bg-blue-100 transition-colors">
+                          <Eye className="h-4 w-4 mr-1" />View
                         </button>
                         {reg.status !== 'approved' && (
-                          <button
-                            onClick={() => handleApproveRegistration(reg.id)}
-                            disabled={actionLoading}
-                            className="inline-flex items-center px-3 py-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                          >
-                            <CheckCircle className="h-4 w-4 mr-1" />
-                            Approve
+                          <button onClick={() => handleApproveRegistration(reg.id)} disabled={actionLoading}
+                            className="inline-flex items-center px-3 py-1.5 bg-green-50 text-green-600 rounded-lg hover:bg-green-100 transition-colors disabled:opacity-50">
+                            <CheckCircle className="h-4 w-4 mr-1" />Approve
                           </button>
                         )}
-                        <button
-                          onClick={() => handleDeleteRegistration(reg.id)}
-                          disabled={actionLoading}
-                          className="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          <Trash2 className="h-4 w-4 mr-1" />
-                          Delete
+                        <button onClick={() => handleDeleteRegistration(reg.id)} disabled={actionLoading}
+                          className="inline-flex items-center px-3 py-1.5 bg-red-50 text-red-600 rounded-lg hover:bg-red-100 transition-colors disabled:opacity-50">
+                          <Trash2 className="h-4 w-4 mr-1" />Delete
                         </button>
                       </div>
                     </td>
@@ -408,42 +323,32 @@ function RegistrationsManagement() {
         </div>
       </div>
 
-      {/* Detailed View Modal - Keeping the same as before */}
       {selectedRegistration && (() => {
         const additionalData = selectedRegistration.additional_data || {}
-        const child = additionalData.child || {}
-        const mother = additionalData.mother || {}
-        const father = additionalData.father || {}
+        const child     = additionalData.child     || {}
+        const mother    = additionalData.mother    || {}
+        const father    = additionalData.father    || {}
         const emergency = additionalData.emergency || {}
-        const medical = additionalData.medical || {}
-        
+        const medical   = additionalData.medical   || {}
         return (
           <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4 overflow-y-auto">
             <div className="bg-white rounded-2xl shadow-2xl max-w-6xl w-full my-8">
-              {/* Modal Header */}
               <div className="bg-gradient-to-r from-emerald-500 to-green-600 p-6 rounded-t-2xl">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center gap-3">
-                    <div className="bg-white bg-opacity-20 p-3 rounded-full">
-                      <FileText className="h-6 w-6 text-white" />
-                    </div>
+                    <div className="bg-white bg-opacity-20 p-3 rounded-full"><FileText className="h-6 w-6 text-white" /></div>
                     <div>
                       <h3 className="text-2xl font-bold text-white">Registration Details</h3>
                       <p className="text-emerald-100 text-sm mt-1">Complete application information</p>
                     </div>
                   </div>
-                  <button
-                    onClick={() => setSelectedRegistration(null)}
-                    className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-colors"
-                  >
+                  <button onClick={() => setSelectedRegistration(null)}
+                    className="bg-white bg-opacity-20 hover:bg-opacity-30 text-white p-2 rounded-full transition-colors">
                     <X className="h-6 w-6" />
                   </button>
                 </div>
               </div>
-
-              {/* Modal Body */}
               <div className="p-6 space-y-6 max-h-[calc(100vh-200px)] overflow-y-auto">
-                {/* Status Badge */}
                 <div className="flex items-center justify-between pb-4 border-b">
                   <div>
                     <p className="text-sm text-gray-500">Application Status</p>
@@ -452,280 +357,110 @@ function RegistrationsManagement() {
                   <div className="text-right">
                     <p className="text-sm text-gray-500">Submitted</p>
                     <p className="font-medium text-gray-900">
-                      {new Date(selectedRegistration.created_at || selectedRegistration.createdAt).toLocaleDateString('en-US', { 
-                        year: 'numeric', 
-                        month: 'long', 
-                        day: 'numeric' 
-                      })}
+                      {new Date(selectedRegistration.created_at || selectedRegistration.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })}
                     </p>
                   </div>
                 </div>
 
                 {/* Child Information */}
                 <div className="bg-gradient-to-br from-pink-50 to-rose-50 rounded-xl p-5 border border-pink-200">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Baby className="h-5 w-5 text-pink-600" />
-                    <h4 className="text-lg font-semibold text-gray-900">Child Information</h4>
-                  </div>
+                  <div className="flex items-center gap-2 mb-4"><Baby className="h-5 w-5 text-pink-600" /><h4 className="text-lg font-semibold text-gray-900">Child Information</h4></div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Surname</p>
-                      <p className="font-medium text-gray-900">{child.surname || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">First Name(s)</p>
-                      <p className="font-medium text-gray-900">{child.firstName || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Nickname</p>
-                      <p className="font-medium text-gray-900">{child.nickname || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Gender</p>
-                      <p className="font-medium text-gray-900">{child.gender || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Date of Birth</p>
-                      <p className="font-medium text-gray-900">
-                        {child.dob?.day && child.dob?.month && child.dob?.year
-                          ? `${child.dob.day}/${child.dob.month}/${child.dob.year}`
-                          : 'N/A'}
-                      </p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Age</p>
-                      <p className="font-medium text-gray-900">{selectedRegistration.child_age || selectedRegistration.childAge || 'N/A'} years</p>
-                    </div>
-                    <div className="md:col-span-2">
-                      <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <MapPin className="h-3 w-3 mr-1" /> Residential Address
-                      </p>
-                      <p className="font-medium text-gray-900">{selectedRegistration.address || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Postal Address</p>
-                      <p className="font-medium text-gray-900">{additionalData.postalAddress || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Calendar className="h-3 w-3 mr-1" /> Preferred Start Date
-                      </p>
-                      <p className="font-medium text-gray-900">
-                        {selectedRegistration.start_date || selectedRegistration.startDate
-                          ? new Date(selectedRegistration.start_date || selectedRegistration.startDate).toLocaleDateString()
-                          : 'N/A'}
-                      </p>
-                    </div>
+                    <div><p className="text-sm text-gray-600 mb-1">Surname</p><p className="font-medium text-gray-900">{child.surname || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1">First Name(s)</p><p className="font-medium text-gray-900">{child.firstName || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1">Nickname</p><p className="font-medium text-gray-900">{child.nickname || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1">Gender</p><p className="font-medium text-gray-900">{child.gender || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1">Date of Birth</p><p className="font-medium text-gray-900">{child.dob?.day && child.dob?.month && child.dob?.year ? `${child.dob.day}/${child.dob.month}/${child.dob.year}` : 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1">Age</p><p className="font-medium text-gray-900">{selectedRegistration.child_age || selectedRegistration.childAge || 'N/A'} years</p></div>
+                    <div className="md:col-span-2"><p className="text-sm text-gray-600 mb-1 flex items-center"><MapPin className="h-3 w-3 mr-1" /> Residential Address</p><p className="font-medium text-gray-900">{selectedRegistration.address || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1">Postal Address</p><p className="font-medium text-gray-900">{additionalData.postalAddress || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1 flex items-center"><Calendar className="h-3 w-3 mr-1" /> Preferred Start Date</p><p className="font-medium text-gray-900">{selectedRegistration.start_date || selectedRegistration.startDate ? new Date(selectedRegistration.start_date || selectedRegistration.startDate).toLocaleDateString() : 'N/A'}</p></div>
                   </div>
                 </div>
 
                 {/* Mother's Information */}
                 <div className="bg-gradient-to-br from-purple-50 to-pink-50 rounded-xl p-5 border border-purple-200">
-                  <div className="flex items-center gap-2 mb-4">
-                    <User className="h-5 w-5 text-purple-600" />
-                    <h4 className="text-lg font-semibold text-gray-900">Mother's Information</h4>
-                  </div>
+                  <div className="flex items-center gap-2 mb-4"><User className="h-5 w-5 text-purple-600" /><h4 className="text-lg font-semibold text-gray-900">Mother's Information</h4></div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Surname</p>
-                      <p className="font-medium text-gray-900">{mother.surname || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">First Name(s)</p>
-                      <p className="font-medium text-gray-900">{mother.firstName || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Phone className="h-3 w-3 mr-1" /> Home Telephone
-                      </p>
-                      <p className="font-medium text-gray-900">{mother.telephoneHome || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Phone className="h-3 w-3 mr-1" /> Cellphone
-                      </p>
-                      <p className="font-medium text-gray-900">{mother.cellphone || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Mail className="h-3 w-3 mr-1" /> Email
-                      </p>
-                      <p className="font-medium text-gray-900">{mother.email || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Briefcase className="h-3 w-3 mr-1" /> Workplace
-                      </p>
-                      <p className="font-medium text-gray-900">{mother.workplace || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Phone className="h-3 w-3 mr-1" /> Work Telephone
-                      </p>
-                      <p className="font-medium text-gray-900">{mother.telephoneWork || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Clock className="h-3 w-3 mr-1" /> Work Hours
-                      </p>
-                      <p className="font-medium text-gray-900">{mother.workHours || 'N/A'}</p>
-                    </div>
+                    <div><p className="text-sm text-gray-600 mb-1">Surname</p><p className="font-medium text-gray-900">{mother.surname || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1">First Name(s)</p><p className="font-medium text-gray-900">{mother.firstName || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1 flex items-center"><Phone className="h-3 w-3 mr-1" /> Home Telephone</p><p className="font-medium text-gray-900">{mother.telephoneHome || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1 flex items-center"><Phone className="h-3 w-3 mr-1" /> Cellphone</p><p className="font-medium text-gray-900">{mother.cellphone || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1 flex items-center"><Mail className="h-3 w-3 mr-1" /> Email</p><p className="font-medium text-gray-900">{mother.email || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1 flex items-center"><Briefcase className="h-3 w-3 mr-1" /> Workplace</p><p className="font-medium text-gray-900">{mother.workplace || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1 flex items-center"><Phone className="h-3 w-3 mr-1" /> Work Telephone</p><p className="font-medium text-gray-900">{mother.telephoneWork || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1 flex items-center"><Clock className="h-3 w-3 mr-1" /> Work Hours</p><p className="font-medium text-gray-900">{mother.workHours || 'N/A'}</p></div>
                   </div>
                 </div>
 
                 {/* Father's Information */}
                 <div className="bg-gradient-to-br from-blue-50 to-indigo-50 rounded-xl p-5 border border-blue-200">
-                  <div className="flex items-center gap-2 mb-4">
-                    <User className="h-5 w-5 text-blue-600" />
-                    <h4 className="text-lg font-semibold text-gray-900">Father's Information</h4>
-                  </div>
+                  <div className="flex items-center gap-2 mb-4"><User className="h-5 w-5 text-blue-600" /><h4 className="text-lg font-semibold text-gray-900">Father's Information</h4></div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Surname</p>
-                      <p className="font-medium text-gray-900">{father.surname || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">First Name(s)</p>
-                      <p className="font-medium text-gray-900">{father.firstName || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Phone className="h-3 w-3 mr-1" /> Home Telephone
-                      </p>
-                      <p className="font-medium text-gray-900">{father.telephoneHome || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Phone className="h-3 w-3 mr-1" /> Cellphone
-                      </p>
-                      <p className="font-medium text-gray-900">{father.cellphone || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Mail className="h-3 w-3 mr-1" /> Email
-                      </p>
-                      <p className="font-medium text-gray-900">{father.email || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Briefcase className="h-3 w-3 mr-1" /> Workplace
-                      </p>
-                      <p className="font-medium text-gray-900">{father.workplace || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Phone className="h-3 w-3 mr-1" /> Work Telephone
-                      </p>
-                      <p className="font-medium text-gray-900">{father.telephoneWork || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Clock className="h-3 w-3 mr-1" /> Work Hours
-                      </p>
-                      <p className="font-medium text-gray-900">{father.workHours || 'N/A'}</p>
-                    </div>
+                    <div><p className="text-sm text-gray-600 mb-1">Surname</p><p className="font-medium text-gray-900">{father.surname || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1">First Name(s)</p><p className="font-medium text-gray-900">{father.firstName || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1 flex items-center"><Phone className="h-3 w-3 mr-1" /> Home Telephone</p><p className="font-medium text-gray-900">{father.telephoneHome || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1 flex items-center"><Phone className="h-3 w-3 mr-1" /> Cellphone</p><p className="font-medium text-gray-900">{father.cellphone || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1 flex items-center"><Mail className="h-3 w-3 mr-1" /> Email</p><p className="font-medium text-gray-900">{father.email || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1 flex items-center"><Briefcase className="h-3 w-3 mr-1" /> Workplace</p><p className="font-medium text-gray-900">{father.workplace || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1 flex items-center"><Phone className="h-3 w-3 mr-1" /> Work Telephone</p><p className="font-medium text-gray-900">{father.telephoneWork || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1 flex items-center"><Clock className="h-3 w-3 mr-1" /> Work Hours</p><p className="font-medium text-gray-900">{father.workHours || 'N/A'}</p></div>
                   </div>
                 </div>
 
                 {/* Emergency Contact */}
                 <div className="bg-gradient-to-br from-amber-50 to-orange-50 rounded-xl p-5 border border-amber-200">
-                  <div className="flex items-center gap-2 mb-4">
-                    <AlertCircle className="h-5 w-5 text-amber-600" />
-                    <h4 className="text-lg font-semibold text-gray-900">Emergency Contact</h4>
-                  </div>
+                  <div className="flex items-center gap-2 mb-4"><AlertCircle className="h-5 w-5 text-amber-600" /><h4 className="text-lg font-semibold text-gray-900">Emergency Contact</h4></div>
                   <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1">Name</p>
-                      <p className="font-medium text-gray-900">{emergency.name || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Phone className="h-3 w-3 mr-1" /> Telephone
-                      </p>
-                      <p className="font-medium text-gray-900">{emergency.telephone || 'N/A'}</p>
-                    </div>
-                    <div>
-                      <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <Phone className="h-3 w-3 mr-1" /> Cellphone
-                      </p>
-                      <p className="font-medium text-gray-900">{emergency.cellphone || 'N/A'}</p>
-                    </div>
-                    <div className="md:col-span-3">
-                      <p className="text-sm text-gray-600 mb-1 flex items-center">
-                        <MapPin className="h-3 w-3 mr-1" /> Address
-                      </p>
-                      <p className="font-medium text-gray-900">{emergency.address || 'N/A'}</p>
-                    </div>
+                    <div><p className="text-sm text-gray-600 mb-1">Name</p><p className="font-medium text-gray-900">{emergency.name || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1 flex items-center"><Phone className="h-3 w-3 mr-1" /> Telephone</p><p className="font-medium text-gray-900">{emergency.telephone || 'N/A'}</p></div>
+                    <div><p className="text-sm text-gray-600 mb-1 flex items-center"><Phone className="h-3 w-3 mr-1" /> Cellphone</p><p className="font-medium text-gray-900">{emergency.cellphone || 'N/A'}</p></div>
+                    <div className="md:col-span-3"><p className="text-sm text-gray-600 mb-1 flex items-center"><MapPin className="h-3 w-3 mr-1" /> Address</p><p className="font-medium text-gray-900">{emergency.address || 'N/A'}</p></div>
                   </div>
                 </div>
 
                 {/* Medical Information */}
                 <div className="bg-gradient-to-br from-red-50 to-pink-50 rounded-xl p-5 border border-red-200">
-                  <div className="flex items-center gap-2 mb-4">
-                    <Heart className="h-5 w-5 text-red-600" />
-                    <h4 className="text-lg font-semibold text-gray-900">Medical Information</h4>
-                  </div>
+                  <div className="flex items-center gap-2 mb-4"><Heart className="h-5 w-5 text-red-600" /><h4 className="text-lg font-semibold text-gray-900">Medical Information</h4></div>
                   <div className="space-y-4">
                     <div className="bg-white rounded-lg p-4 border border-red-100">
                       <p className="text-sm text-gray-600 mb-2">Medicine Allergies</p>
-                      <p className="font-medium text-gray-900 mb-1">
-                        {medical.hasMedicineAllergies || 'Not specified'}
-                      </p>
+                      <p className="font-medium text-gray-900 mb-1">{medical.hasMedicineAllergies || 'Not specified'}</p>
                       {medical.hasMedicineAllergies === 'Yes' && medical.medicineAllergiesDetails && (
-                        <p className="text-sm text-gray-700 bg-red-50 p-2 rounded border border-red-200 mt-2">
-                          <strong>Details:</strong> {medical.medicineAllergiesDetails}
-                        </p>
+                        <p className="text-sm text-gray-700 bg-red-50 p-2 rounded border border-red-200 mt-2"><strong>Details:</strong> {medical.medicineAllergiesDetails}</p>
                       )}
                     </div>
                     <div className="bg-white rounded-lg p-4 border border-red-100">
                       <p className="text-sm text-gray-600 mb-2">Food Allergies/Sensitivities</p>
-                      <p className="font-medium text-gray-900 mb-1">
-                        {medical.hasFoodAllergies || 'Not specified'}
-                      </p>
+                      <p className="font-medium text-gray-900 mb-1">{medical.hasFoodAllergies || 'Not specified'}</p>
                       {medical.hasFoodAllergies === 'Yes' && medical.foodAllergiesDetails && (
-                        <p className="text-sm text-gray-700 bg-red-50 p-2 rounded border border-red-200 mt-2">
-                          <strong>Details:</strong> {medical.foodAllergiesDetails}
-                        </p>
+                        <p className="text-sm text-gray-700 bg-red-50 p-2 rounded border border-red-200 mt-2"><strong>Details:</strong> {medical.foodAllergiesDetails}</p>
                       )}
                     </div>
                   </div>
                 </div>
 
-                {/* Registration ID */}
                 <div className="bg-gray-50 rounded-lg p-4 border border-gray-200">
                   <p className="text-xs text-gray-500 mb-1">Registration ID</p>
                   <p className="font-mono text-sm text-gray-700">{selectedRegistration.id}</p>
                 </div>
               </div>
 
-              {/* Modal Footer */}
               <div className="bg-gray-50 px-6 py-4 rounded-b-2xl flex items-center justify-between border-t">
                 <div className="flex gap-2">
                   {selectedRegistration.status !== 'approved' && (
-                    <button
-                      onClick={() => handleApproveRegistration(selectedRegistration.id)}
-                      disabled={actionLoading}
-                      className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                      <CheckCircle className="h-4 w-4 mr-2" />
-                      {actionLoading ? 'Approving...' : 'Approve Registration'}
+                    <button onClick={() => handleApproveRegistration(selectedRegistration.id)} disabled={actionLoading}
+                      className="inline-flex items-center px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700 transition-colors disabled:opacity-50">
+                      <CheckCircle className="h-4 w-4 mr-2" />{actionLoading ? 'Approving...' : 'Approve Registration'}
                     </button>
                   )}
-                  <button
-                    onClick={() => handleDeleteRegistration(selectedRegistration.id)}
-                    disabled={actionLoading}
-                    className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-                  >
-                    <Trash2 className="h-4 w-4 mr-2" />
-                    Delete Registration
+                  <button onClick={() => handleDeleteRegistration(selectedRegistration.id)} disabled={actionLoading}
+                    className="inline-flex items-center px-4 py-2 bg-red-600 text-white rounded-lg hover:bg-red-700 transition-colors disabled:opacity-50">
+                    <Trash2 className="h-4 w-4 mr-2" />Delete Registration
                   </button>
                 </div>
-                <button
-                  onClick={() => setSelectedRegistration(null)}
-                  className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors"
-                >
-                  Close
-                </button>
+                <button onClick={() => setSelectedRegistration(null)}
+                  className="px-6 py-2 bg-gray-600 text-white rounded-lg hover:bg-gray-700 transition-colors">Close</button>
               </div>
             </div>
           </div>
@@ -735,11 +470,7 @@ function RegistrationsManagement() {
   )
 }
 
-
-
-
-
-// ─── Placeholder sub-components ───────────────────────────────────────────────────
+// ─── Placeholder sub-components ───────────────────────────────────────────────
 const Placeholder = ({ title, emoji, note }) => (
   <div className="bg-white rounded-2xl shadow-sm border border-amber-100 p-6">
     <h2 className="text-xl font-semibold text-amber-900 mb-2">{title}</h2>
@@ -747,7 +478,7 @@ const Placeholder = ({ title, emoji, note }) => (
   </div>
 )
 
-// ─── Permission Denied ─────────────────────────────────────────────────────────────
+// ─── Permission Denied ────────────────────────────────────────────────────────
 function PermissionDenied({ role, section }) {
   return (
     <div className="bg-yellow-50 border border-yellow-200 rounded-2xl p-5">
@@ -762,15 +493,16 @@ function PermissionDenied({ role, section }) {
   )
 }
 
-// ─── Main Dashboard ────────────────────────────────────────────────────────────────
+// ─── Main Dashboard ───────────────────────────────────────────────────────────
 export default function DayCareDashboard({ user }) {
-  const [activeTab, setActiveTab]                     = useState('overview')
-  const [notificationCount, setNotificationCount]     = useState(0)
-  const [childrenCount, setChildrenCount]             = useState(0)
-  const [registrationCount, setRegistrationCount]     = useState(0)
+  const [activeTab,          setActiveTab]          = useState('overview')
+  const [notificationCount,  setNotificationCount]  = useState(0)
+  const [childrenCount,      setChildrenCount]      = useState(0)
+  const [registrationCount,  setRegistrationCount]  = useState(0)
+  const [overdueFeesCount,   setOverdueFeesCount]   = useState(0)   // ← NEW
 
-  // ✅ Normalize role — handle both hyphen and underscore variants
-  const rawRole = user.role?.toUpperCase().replace(/-/g, '_')
+  // Normalize role — handle both hyphen and underscore variants
+  const rawRole     = user.role?.toUpperCase().replace(/-/g, '_')
   const isPrincipal = rawRole === ROLES.PRINCIPAL
 
   const visibleTabs = ALL_TABS.filter(t => t.roles.includes(rawRole))
@@ -781,26 +513,44 @@ export default function DayCareDashboard({ user }) {
 
   const fetchCounts = useCallback(async () => {
     try {
-      // Fetch children count
-      const childRes = await fetch('/api/daycare/children')
+      // Children
+      const childRes  = await fetch('/api/daycare/children')
       const childData = await childRes.json()
-      const children = childData.children || []
+      const children  = childData.children || []
       setChildrenCount(children.filter(c => c.status === 'active').length)
 
-      // Fetch registrations count
-      const regRes = await fetch('/api/registrations')
+      // Registrations
+      const regRes  = await fetch('/api/registrations')
       const regData = await regRes.json()
       const registrations = Array.isArray(regData) ? regData : (regData.registrations || [])
       setRegistrationCount(registrations.filter(r => r.status === 'pending').length)
 
-      // Fetch notification count
-      const notifRes = await fetch('/api/daycare/notifications/count')
+      // Notifications
+      const notifRes  = await fetch('/api/daycare/notifications/count')
       const notifData = await notifRes.json()
       setNotificationCount(notifData.count || 0)
+
+      // Overdue fees — only fetched for principals ────────────────── NEW
+      if (rawRole === ROLES.PRINCIPAL) {
+        const now        = new Date()
+        const thisMonth  = now.getMonth() + 1
+        const thisYear   = now.getFullYear()
+        const feesRes    = await fetch(`/api/daycare/fees?year=${thisYear}&month=${thisMonth}`)
+        if (feesRes.ok) {
+          const feesData = await feesRes.json()
+          const payments = feesData.payments || []
+          // Count children whose status is Overdue (payment exists) or who
+          // have no payment record yet in a past month
+          const overdueCount = payments.filter(p =>
+            p.status === 'Overdue' || p.status === 'Unpaid'
+          ).length
+          setOverdueFeesCount(overdueCount)
+        }
+      }
     } catch (err) {
       console.error('Failed to fetch counts:', err)
     }
-  }, [])
+  }, [rawRole])
 
   useEffect(() => {
     fetchCounts()
@@ -811,6 +561,7 @@ export default function DayCareDashboard({ user }) {
   function tabBadge(tabId) {
     if (tabId === 'children')      return childrenCount
     if (tabId === 'registrations') return registrationCount
+    if (tabId === 'fees')          return overdueFeesCount   // ← NEW badge
     return 0
   }
 
@@ -831,7 +582,6 @@ export default function DayCareDashboard({ user }) {
                 <p className="text-xs text-amber-600">Welcome back, {user.name}</p>
               </div>
             </div>
-
             <div className="flex items-center gap-3">
               <button className="relative p-2 text-amber-600 hover:text-amber-900 transition-colors rounded-lg hover:bg-amber-50">
                 <IconBell />
@@ -863,9 +613,7 @@ export default function DayCareDashboard({ user }) {
               const badge    = tabBadge(id)
               const isActive = activeTab === id
               return (
-                <button
-                  key={id}
-                  onClick={() => setActiveTab(id)}
+                <button key={id} onClick={() => setActiveTab(id)}
                   className={`relative py-4 px-4 border-b-2 font-medium text-sm whitespace-nowrap transition-colors ${
                     isActive
                       ? 'border-amber-500 text-amber-700'
@@ -888,12 +636,21 @@ export default function DayCareDashboard({ user }) {
       {/* ── Main Content ── */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
 
+        {/* Overview */}
         {activeTab === 'overview' && (
           <div className="space-y-6">
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
-              <StatCard label="Enrolled Children"   value={childrenCount}      color="amber"   />
-              <StatCard label="Present Today"        value="—"                  color="emerald" />
-              <StatCard label="New Registrations"    value={registrationCount}  color="sky"     ping={registrationCount > 0} />
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+              <StatCard label="Enrolled Children"  value={childrenCount}     color="amber"   />
+              <StatCard label="Present Today"       value="—"                 color="emerald" />
+              <StatCard label="New Registrations"   value={registrationCount} color="sky"     ping={registrationCount > 0} />
+              {isPrincipal && (
+                <StatCard
+                  label="Overdue Fees"
+                  value={overdueFeesCount}
+                  color="rose"
+                  ping={overdueFeesCount > 0}
+                />
+              )}
             </div>
 
             <div className="rounded-2xl border border-amber-200 bg-amber-50 p-5 flex items-start gap-4">
@@ -906,24 +663,55 @@ export default function DayCareDashboard({ user }) {
                 </p>
                 <p className="text-sm text-amber-700 mt-1">
                   {isPrincipal
-                    ? 'You can manage staff, view reports, and control all settings.'
+                    ? 'You can manage staff, fees, reports, and control all settings.'
                     : 'Contact your principal to request access to staff or report sections.'}
                 </p>
               </div>
             </div>
+
+            {/* Quick-action overdue fees banner — principal only */}
+            {isPrincipal && overdueFeesCount > 0 && (
+              <div className="rounded-2xl border border-rose-200 bg-rose-50 p-5 flex items-center justify-between gap-4">
+                <div className="flex items-start gap-3">
+                  <span className="text-2xl">💰</span>
+                  <div>
+                    <p className="font-semibold text-rose-900">
+                      {overdueFeesCount} outstanding fee{overdueFeesCount > 1 ? 's' : ''} this month
+                    </p>
+                    <p className="text-sm text-rose-700 mt-0.5">
+                      Some parents have not yet paid their monthly school fees.
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setActiveTab('fees')}
+                  className="shrink-0 px-4 py-2 bg-rose-600 text-white text-sm font-semibold rounded-xl hover:bg-rose-700 transition"
+                >
+                  View Fees →
+                </button>
+              </div>
+            )}
           </div>
         )}
 
         {activeTab === 'registrations' && <RegistrationsManagement />}
         {activeTab === 'children'      && <ChildrenManagement />}
-        {activeTab === 'attendance'    && <Placeholder title="Attendance"         emoji="📅" />}
+        {activeTab === 'attendance'    && <Placeholder title="Attendance"           emoji="📅" />}
         {activeTab === 'lessons'       && <Placeholder title="Lessons & Activities" emoji="📚" />}
+        {activeTab === 'items'         && <DaycareItemsManagement />}
 
-       {activeTab === 'staff' && (
-  isPrincipal
-    ? <StaffManagement />
-    : <PermissionDenied role={user.role} section="Staff Management" />
-)}
+        {/* ── School Fees — principal only ── */}
+        {activeTab === 'fees' && (
+          isPrincipal
+            ? <SchoolFeesManagement />
+            : <PermissionDenied role={user.role} section="School Fees" />
+        )}
+
+        {activeTab === 'staff' && (
+          isPrincipal
+            ? <StaffManagement />
+            : <PermissionDenied role={user.role} section="Staff Management" />
+        )}
         {activeTab === 'reports' && (
           isPrincipal
             ? <Placeholder title="Reports" emoji="📊" />

@@ -8,6 +8,7 @@ const ALL_CATEGORIES = [
   { value: 'Disabled',   label: 'Disabled',   color: 'blue',   icon: '♿' },
   { value: 'Vulnerable', label: 'Vulnerable', color: 'orange', icon: '🛡️' },
   { value: 'Orphan',     label: 'Orphan',     color: 'purple', icon: '🧒' },
+  { value: 'Destitute',  label: 'Destitute',  color: 'red',    icon: '🏚️' }, // ← NEW
 ]
 
 const CATEGORY_STYLES = {
@@ -15,6 +16,7 @@ const CATEGORY_STYLES = {
   Disabled:   'bg-blue-100 text-blue-700 border-blue-200',
   Vulnerable: 'bg-orange-100 text-orange-700 border-orange-200',
   Orphan:     'bg-purple-100 text-purple-700 border-purple-200',
+  Destitute:  'bg-red-100 text-red-700 border-red-200',              // ← NEW
 }
 
 // ── Helper: detect gender from Omang ID (5th digit: 1=Male, 2=Female) ──
@@ -56,7 +58,7 @@ export default function PeopleRegistry() {
 
   // ── Filters ───────────────────────────────────────────────────
   const [selectedVillage,    setSelectedVillage]    = useState('all')
-  const [selectedCategories, setSelectedCategories] = useState([]) // empty = show all
+  const [selectedCategories, setSelectedCategories] = useState([])
   const [searchQuery,        setSearchQuery]        = useState('')
 
   const [formData, setFormData] = useState(EMPTY_FORM)
@@ -75,29 +77,21 @@ export default function PeopleRegistry() {
     }
   }
 
-  // ── Unique villages ───────────────────────────────────────────
   const villages = useMemo(() => {
     const set = new Set(people.map(p => p.villageTown?.trim()).filter(Boolean))
     return Array.from(set).sort()
   }, [people])
 
-  // ── Filtered list ─────────────────────────────────────────────
   const filteredPeople = useMemo(() => {
     let list = people
-
-    // Village filter
     if (selectedVillage !== 'all') {
       list = list.filter(p => p.villageTown?.trim() === selectedVillage)
     }
-
-    // Category filter — person must have ALL selected categories (OR logic: any match)
     if (selectedCategories.length > 0) {
       list = list.filter(p =>
         selectedCategories.some(cat => (p.categories || []).includes(cat))
       )
     }
-
-    // Search
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase()
       list = list.filter(p =>
@@ -106,18 +100,15 @@ export default function PeopleRegistry() {
         p.villageTown?.toLowerCase().includes(q)
       )
     }
-
     return list
   }, [people, selectedVillage, selectedCategories, searchQuery])
 
-  // ── Category filter toggle ────────────────────────────────────
   const toggleCategoryFilter = (cat) => {
     setSelectedCategories(prev =>
       prev.includes(cat) ? prev.filter(c => c !== cat) : [...prev, cat]
     )
   }
 
-  // ── Form handlers ─────────────────────────────────────────────
   const handleIdChange = (e) => {
     const idNumber = e.target.value
     const detectedGender = detectGenderFromId(idNumber)
@@ -205,7 +196,6 @@ export default function PeopleRegistry() {
     }
   }
 
-  // ── PDF ───────────────────────────────────────────────────────
   const handleExportAllPdf = async () => {
     if (!people.length) return
     setExportingPdf(true)
@@ -258,7 +248,7 @@ export default function PeopleRegistry() {
       <div className="flex justify-between items-center flex-wrap gap-3">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Community Registry</h2>
-          <p className="text-gray-600 mt-1">Elderly, Disabled, Vulnerable &amp; Orphan residents</p>
+          <p className="text-gray-600 mt-1">Elderly, Disabled, Vulnerable, Orphan &amp; Destitute residents</p>
         </div>
         <div className="flex items-center gap-2 flex-wrap">
           <button
@@ -438,7 +428,7 @@ export default function PeopleRegistry() {
                 Category <span className="text-red-500">*</span>
               </h4>
               <p className="text-xs text-gray-500 mb-3">Select all that apply to this person.</p>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-3">
                 {ALL_CATEGORIES.map(cat => {
                   const isChecked = formData.categories.includes(cat.value)
                   return (
@@ -472,7 +462,7 @@ export default function PeopleRegistry() {
                 })}
               </div>
               {formData.categories.length === 0 && (
-                <p className="mt-2 text-xs text-red-500">⚠️ Please select at least one category.</p>
+                <p className="mt-2 text-xs text-red-500">Please select at least one category.</p>
               )}
             </div>
 
@@ -501,7 +491,7 @@ export default function PeopleRegistry() {
                       <span className={`ml-2 text-xs font-normal px-2 py-0.5 rounded-full ${
                         detectGenderFromId(formData.idNumber) === 'Male' ? 'bg-blue-50 text-blue-600' : 'bg-pink-50 text-pink-600'
                       }`}>
-                        {detectGenderFromId(formData.idNumber) === 'Male' ? '♂ Male detected' : '♀ Female detected'}
+                        {detectGenderFromId(formData.idNumber) === 'Male' ? 'Male detected' : 'Female detected'}
                       </span>
                     )}
                   </label>
@@ -686,7 +676,7 @@ export default function PeopleRegistry() {
                     <td className="px-4 py-3 text-sm text-gray-400">{idx + 1}</td>
                     <td className="px-4 py-3 whitespace-nowrap">
                       <div className="text-sm font-semibold text-gray-900">{person.firstName} {person.lastName}</div>
-                      {person.medicalInfo && <div className="text-xs text-red-600 mt-0.5">⚕️ Medical Info</div>}
+                      {person.medicalInfo && <div className="text-xs text-red-600 mt-0.5">Medical Info</div>}
                     </td>
 
                     {/* Categories cell */}
@@ -749,7 +739,7 @@ export default function PeopleRegistry() {
       </div>
 
       {/* ── Stats ── */}
-      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-7 gap-4">
+      <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-8 gap-4">
         {[
           { label: isFiltered ? 'Filtered' : 'Total', value: filteredPeople.length, color: 'emerald', sub: isFiltered ? `${people.length} total` : null },
           { label: 'Avg Age', value: filteredPeople.length ? Math.round(filteredPeople.reduce((s, p) => s + Number(p.dateOfBirth ? calculateAge(p.dateOfBirth.split('T')[0]) : (p.age || 0)), 0) / filteredPeople.length) : 0, color: 'blue' },
