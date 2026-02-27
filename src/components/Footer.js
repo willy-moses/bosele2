@@ -144,7 +144,7 @@ export default function Footer() {
         <div className="border-t border-white/20 pt-8">
           <div className="text-center bg-white/5 backdrop-blur-sm rounded-2xl p-6 border border-white/10">
             <p className="text-gray-300 mb-2">
-              &copy; 2025 <span className="font-semibold text-white">Bosele Kgotla Village Development Committee</span>
+              &copy; {new Date().getFullYear()} <span className="font-semibold text-white">Bosele Kgotla Village Development Committee</span>
             </p>
             <p className="text-gray-300 text-sm">
               Serving our community with pride and dedication
@@ -156,7 +156,6 @@ export default function Footer() {
             </div>
           </div>
         </div>
-
         {/* Decorative Elements */}
         <div className="absolute top-10 left-10 w-20 h-20 bg-gradient-to-r from-green-400/20 to-green-500/30 rounded-full blur-xl"></div>
         <div className="absolute bottom-10 right-10 w-32 h-32 bg-gradient-to-r from-green-500/20 to-green-600/30 rounded-full blur-xl"></div>
