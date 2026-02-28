@@ -6,6 +6,7 @@ import ChildrenManagement from '../ChildrenManagement'
 import StaffManagement from '../StaffManagement'
 import DaycareItemsManagement from './DaycareItemsManagement'
 import SchoolFeesManagement from '../SchoolFeesManagement'
+import ReportsManagement from '../ReportsManagement'
 
 // ─── Role constants (underscores to match DB) ────────────────────────────────
 const ROLES = {
@@ -714,7 +715,7 @@ export default function DayCareDashboard({ user }) {
         )}
         {activeTab === 'reports' && (
           isPrincipal
-            ? <Placeholder title="Reports" emoji="📊" />
+            ? <ReportsManagement />
             : <PermissionDenied role={user.role} section="Reports" />
         )}
         {activeTab === 'settings' && (
