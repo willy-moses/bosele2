@@ -64,14 +64,36 @@ function SummaryCard({ label, value, sub, colorClass, Icon, onClick, active }) {
 
 // ─── Set Fee Modal ────────────────────────────────────────────────────────────
 function SetFeeModal({ child, onClose, onSave }) {
-  const [fee, setFee]     = useState(child.monthlyFee ?? '')
-  const [notes, setNotes] = useState(child.feeNotes   ?? '')
+  const [fee, setFee]       = useState(child.monthlyFee ?? '')
+  const [notes, setNotes]   = useState(child.feeNotes   ?? '')
   const [saving, setSaving] = useState(false)
+
+  // Default to current month but let principal override
+  const [startMonth, setStartMonth] = useState(() => {
+    if (child.enrollmentDate) {
+      const d = new Date(child.enrollmentDate)
+      return d.getMonth() + 1
+    }
+    return currentMonth
+  })
+  const [startYear, setStartYear] = useState(() => {
+    if (child.enrollmentDate) {
+      const d = new Date(child.enrollmentDate)
+      return d.getFullYear()
+    }
+    return currentYear
+  })
+
+  const monthsToWaive = startMonth - 1
+
   const handleSave = async () => {
     setSaving(true)
-    try { await onSave(child.id, fee === '' ? null : Number(fee), notes); onClose() }
-    finally { setSaving(false) }
+    try {
+      await onSave(child.id, fee === '' ? null : Number(fee), notes, startMonth, startYear)
+      onClose()
+    } finally { setSaving(false) }
   }
+
   return (
     <div className="fixed inset-0 bg-black/50 z-50 flex items-center justify-center p-4">
       <div className="bg-white rounded-2xl shadow-2xl max-w-sm w-full">
@@ -83,6 +105,42 @@ function SetFeeModal({ child, onClose, onSave }) {
           <button onClick={onClose} className="text-white/70 hover:text-white"><X className="h-5 w-5" /></button>
         </div>
         <div className="p-5 space-y-4">
+
+          {/* Enrollment start month picker */}
+          <div>
+            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
+              Child Started Attending
+            </label>
+            <div className="grid grid-cols-2 gap-2">
+              <select value={startMonth} onChange={e => setStartMonth(Number(e.target.value))}
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                {MONTHS.map((m, i) => <option key={m} value={i + 1}>{m}</option>)}
+              </select>
+              <select value={startYear} onChange={e => setStartYear(Number(e.target.value))}
+                className="border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-teal-400">
+                {Array.from({ length: 5 }, (_, i) => currentYear - 2 + i).map(y => (
+                  <option key={y} value={y}>{y}</option>
+                ))}
+              </select>
+            </div>
+          </div>
+
+          {/* Waive info banner */}
+          <div className={`rounded-xl p-3 text-xs space-y-1 border ${
+            monthsToWaive > 0
+              ? 'bg-teal-50 border-teal-200 text-teal-800'
+              : 'bg-gray-50 border-gray-200 text-gray-600'
+          }`}>
+            {monthsToWaive > 0 ? (
+              <>
+                <p className="font-semibold">📅 {monthsToWaive} month{monthsToWaive !== 1 ? 's' : ''} will be auto-waived</p>
+                <p><strong>{MONTHS[0]} – {MONTHS[startMonth - 2]} {startYear}</strong> → Waived (BWP 0), won't show as Overdue</p>
+              </>
+            ) : (
+              <p className="font-semibold">📅 Started in January — no months to waive</p>
+            )}
+          </div>
+
           <div>
             <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wide mb-1">
               Monthly Fee (BWP) — leave blank to use school default ({fmt(DEFAULT_FEE)})
@@ -376,11 +434,18 @@ export default function SchoolFeesManagement() {
     await fetchPayments(); showToast('Payment recorded successfully')
   }
 
-  const handleSetFee = async (childId, monthlyFee, feeNotes) => {
-    const res = await fetch(`/api/daycare/children/${childId}`, { method:'PATCH', headers:{'Content-Type':'application/json'}, body: JSON.stringify({ monthlyFee, feeNotes }) })
-    if (!res.ok) { const d = await res.json(); throw new Error(d.error || 'Failed to update fee') }
-    await fetchChildren(); showToast('Fee updated')
-  }
+  const handleSetFee = async (childId, monthlyFee, feeNotes, startMonth, startYear) => {
+  const res = await fetch('/api/daycare/fees/set-child-fee', {
+    method: 'PATCH',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ childId, monthlyFee, feeNotes, startMonth, startYear })
+  })
+  const d = await res.json()
+  if (!res.ok) throw new Error(d.error || 'Failed to update fee')
+  await fetchChildren()
+  await fetchPayments()
+  showToast(d.message || 'Fee updated')
+}
 
   const handleDownloadReceipt = async (payment, childName) => {
     if (!payment?.id) return

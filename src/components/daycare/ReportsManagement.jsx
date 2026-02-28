@@ -226,23 +226,28 @@ export default function ReportsManagement() {
 
   // Per-month breakdown within the selected term — with per-child counts
   const termByMonth = useMemo(() =>
-    termDef.months.map(m => {
-      const mp           = allPayments.filter(p => p.month === m)
-      const recordedIds  = new Set(mp.map(p => p.childId))
-      const recordedDue  = mp.reduce((s, p) => s + Number(p.amountDue  || 0), 0)
-      const unrecorded   = activeChildren.filter(c => !recordedIds.has(c.id)).reduce((s, c) => s + childFee(c), 0)
-      const childrenPaid = mp.filter(p => ['Paid','Partial'].includes(p.status)).length
-      const childrenUnpaid = mp.filter(p => ['Unpaid','Overdue'].includes(p.status)).length
-                           + activeChildren.filter(c => !recordedIds.has(c.id)).length
-      return {
-        month:          MONTHS[m - 1],
-        due:            recordedDue + unrecorded,
-        paid:           mp.reduce((s, p) => s + Number(p.amountPaid || 0), 0),
-        totalChildren:  activeChildren.length,
-        childrenPaid,
-        childrenUnpaid,
-      }
-    }), [allPayments, termDef, activeChildren, childFee])
+  termDef.months.map(m => {
+    const mp          = allPayments.filter(p => p.month === m)
+    const recordedIds = new Set(mp.map(p => p.childId))
+
+    const recordedDue  = mp.filter(p => p.status !== 'Waived').reduce((s, p) => s + Number(p.amountDue  || 0), 0)
+    const unrecorded   = activeChildren.filter(c => !recordedIds.has(c.id)).reduce((s, c) => s + childFee(c), 0)
+
+    const childrenPaid    = mp.filter(p => ['Paid','Partial'].includes(p.status)).length
+    const childrenWaived  = mp.filter(p => p.status === 'Waived').length
+    const childrenUnpaid  = mp.filter(p => ['Unpaid','Overdue'].includes(p.status)).length
+                          + activeChildren.filter(c => !recordedIds.has(c.id)).length
+
+    return {
+      month:         MONTHS[m - 1],
+      due:           recordedDue + unrecorded,
+      paid:          mp.reduce((s, p) => s + Number(p.amountPaid || 0), 0),
+      totalChildren: activeChildren.length,
+      childrenPaid,
+      childrenUnpaid,
+      childrenWaived,
+    }
+  }), [allPayments, termDef, activeChildren, childFee])
 
   // Per-TERM aggregates for annual view — per child counts
   const annualByTerm = useMemo(() =>
@@ -494,39 +499,82 @@ export default function ReportsManagement() {
             {/* Monthly breakdown within term — with per-child paid/unpaid */}
             <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">Month-by-Month within {reportTerm}</p>
             <div className="space-y-3 mb-6">
-              {termByMonth.map(m => (
-                <div key={m.month} className="bg-gray-50 rounded-xl p-3 border border-gray-100">
-                  <div className="flex items-center justify-between mb-2">
-                    <span className="text-sm font-bold text-gray-700">{m.month}</span>
-                    <div className="flex items-center gap-3 text-xs">
-                      <span className="flex items-center gap-1 text-green-700 font-semibold">
-                        <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
-                        {m.childrenPaid} of {m.totalChildren} {m.totalChildren === 1 ? 'child' : 'children'} paid
-                      </span>
-                      <span className="flex items-center gap-1 text-red-600 font-semibold">
-                        <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
-                        {m.childrenUnpaid} unpaid
-                      </span>
-                    </div>
-                  </div>
-                  <div className="grid grid-cols-2 gap-2">
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-gray-400 w-10 shrink-0">Billed</span>
-                      <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
-                        <div className="h-full bg-amber-200 rounded-full" style={{ width: maxMonthPaid > 0 ? `${(m.due/maxMonthPaid)*100}%` : '0%' }} />
-                      </div>
-                      <span className="text-xs text-gray-500 w-16 text-right">{fmtShort(m.due)}</span>
-                    </div>
-                    <div className="flex items-center gap-1.5">
-                      <span className="text-xs text-gray-400 w-10 shrink-0">Paid</span>
-                      <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
-                        <div className={`h-full ${termDef.bar} rounded-full`} style={{ width: maxMonthPaid > 0 ? `${(m.paid/maxMonthPaid)*100}%` : '0%' }} />
-                      </div>
-                      <span className="text-xs font-semibold text-green-700 w-16 text-right">{fmtShort(m.paid)}</span>
-                    </div>
-                  </div>
-                </div>
-              ))}
+             {termByMonth.map(m => {
+  const maxDue = Math.max(...termByMonth.map(x => x.due), 1)
+  const pct    = m.due > 0 ? Math.min(100, (m.paid / m.due) * 100) : 0
+  const allWaived = m.childrenWaived === activeChildren.length
+
+  return (
+    <div key={m.month} className={`rounded-xl p-3 border ${
+      allWaived ? 'bg-gray-50 border-gray-200 opacity-60' : 'bg-gray-50 border-gray-100'
+    }`}>
+      <div className="flex items-center justify-between mb-2">
+        <div className="flex items-center gap-2">
+          <span className="text-sm font-bold text-gray-700">{m.month}</span>
+          {allWaived && (
+            <span className="text-xs bg-gray-200 text-gray-500 px-2 py-0.5 rounded-full font-semibold">All Waived</span>
+          )}
+        </div>
+        <div className="flex items-center gap-3 text-xs flex-wrap justify-end">
+          {m.childrenPaid > 0 && (
+            <span className="flex items-center gap-1 text-green-700 font-semibold">
+              <span className="w-2 h-2 rounded-full bg-green-500 inline-block" />
+              {m.childrenPaid} paid
+            </span>
+          )}
+          {m.childrenUnpaid > 0 && (
+            <span className="flex items-center gap-1 text-red-600 font-semibold">
+              <span className="w-2 h-2 rounded-full bg-red-400 inline-block" />
+              {m.childrenUnpaid} unpaid
+            </span>
+          )}
+          {m.childrenWaived > 0 && (
+            <span className="flex items-center gap-1 text-gray-500 font-semibold">
+              <span className="w-2 h-2 rounded-full bg-gray-400 inline-block" />
+              {m.childrenWaived} waived
+            </span>
+          )}
+        </div>
+      </div>
+
+      {allWaived ? (
+        <p className="text-xs text-gray-400 italic">No fee applicable this month</p>
+      ) : (
+        <>
+          {/* Collection progress for this month */}
+          <div className="mb-2">
+            <div className="flex justify-between text-xs text-gray-400 mb-1">
+              <span>Collection progress</span>
+              <span className="font-semibold">{pct.toFixed(0)}%</span>
+            </div>
+            <div className="w-full h-3 bg-gray-200 rounded-full overflow-hidden">
+              <div className={`h-full ${termDef.bar} rounded-full transition-all duration-700`}
+                style={{ width: `${pct}%` }} />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-2">
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-gray-400 w-10 shrink-0">Billed</span>
+              <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div className="h-full bg-amber-200 rounded-full"
+                  style={{ width: maxDue > 0 ? `${(m.due / maxDue) * 100}%` : '0%' }} />
+              </div>
+              <span className="text-xs text-gray-500 w-16 text-right">{fmtShort(m.due)}</span>
+            </div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-xs text-gray-400 w-10 shrink-0">Paid</span>
+              <div className="flex-1 h-3 bg-gray-200 rounded-full overflow-hidden">
+                <div className={`h-full ${termDef.bar} rounded-full`}
+                  style={{ width: maxDue > 0 ? `${(m.paid / maxDue) * 100}%` : '0%' }} />
+              </div>
+              <span className="text-xs font-semibold text-green-700 w-16 text-right">{fmtShort(m.paid)}</span>
+            </div>
+          </div>
+        </>
+      )}
+    </div>
+  )
+})}
             </div>
 
             {/* Per-child table */}
