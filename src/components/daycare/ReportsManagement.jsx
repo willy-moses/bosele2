@@ -85,6 +85,81 @@ function Section({ title, icon: Icon, children, color = 'amber', badge }) {
     </div>
   )
 }
+function AISummary({ data }) {
+  const [summary, setSummary] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [generated, setGenerated] = useState(false)
+
+  const generate = async () => {
+    setLoading(true)
+    try {
+      const response = await fetch('/api/daycare/ai-summary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data })
+      })
+      const result = await response.json()
+      if (!response.ok) throw new Error(result.error || 'Failed')
+      setSummary(result.summary || 'Unable to generate summary.')
+      setGenerated(true)
+    } catch (e) {
+      setSummary('Unable to generate summary at this time.')
+      setGenerated(true)
+    } finally { setLoading(false) }
+  }
+
+  return (
+    <div className="bg-gradient-to-br from-amber-50 to-orange-50 border border-amber-200 rounded-2xl p-6 shadow-sm">
+      <div className="flex items-start justify-between gap-4">
+        <div className="flex items-center gap-2">
+          <div className="w-8 h-8 rounded-full bg-amber-500 flex items-center justify-center shrink-0">
+            <span className="text-white text-xs font-black">AI</span>
+          </div>
+          <div>
+            <p className="text-sm font-bold text-amber-900">Report Summary</p>
+            <p className="text-xs text-amber-600">Auto-generated overview for quick reading</p>
+          </div>
+        </div>
+        {!generated && (
+          <button onClick={generate} disabled={loading}
+            className="inline-flex items-center gap-2 px-4 py-2 bg-amber-500 text-white rounded-xl text-xs font-bold hover:bg-amber-600 transition disabled:opacity-50 shrink-0">
+            {loading ? <RefreshCw className="h-3.5 w-3.5 animate-spin" /> : <TrendingUp className="h-3.5 w-3.5" />}
+            {loading ? 'Generating…' : 'Generate Summary'}
+          </button>
+        )}
+        {generated && (
+          <button onClick={() => { setSummary(''); setGenerated(false) }}
+            className="p-1.5 text-amber-400 hover:text-amber-600 transition" title="Regenerate">
+            <RefreshCw className="h-4 w-4" />
+          </button>
+        )}
+      </div>
+
+      {loading && (
+        <div className="mt-4 flex items-center gap-2 text-amber-600 text-sm">
+          <div className="flex gap-1">
+            <span className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '0ms' }} />
+            <span className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '150ms' }} />
+            <span className="w-2 h-2 bg-amber-400 rounded-full animate-bounce" style={{ animationDelay: '300ms' }} />
+          </div>
+          <span className="text-xs">Analysing report data…</span>
+        </div>
+      )}
+
+      {summary && (
+        <p className="mt-4 text-sm text-amber-900 leading-relaxed border-t border-amber-200 pt-4">
+          {summary}
+        </p>
+      )}
+
+      {!generated && !loading && (
+        <p className="mt-3 text-xs text-amber-500 italic">
+          Click "Generate Summary" to get a plain-English overview of this report.
+        </p>
+      )}
+    </div>
+  )
+}
 
 // ─── Term progress bar ────────────────────────────────────────────────────────
 function TermProgress({ due, paid, label, months, barColor }) {
@@ -669,6 +744,8 @@ export default function ReportsManagement() {
         </>
       )}
 
+      
+
       {/* ══════════════════════ ANNUAL VIEW ══════════════════════ */}
       {reportType === 'annual' && (
         <>
@@ -811,6 +888,29 @@ export default function ReportsManagement() {
           </div>
         </div>
       </Section>
+
+
+      {/* ── AI Summary ── */}
+      <AISummary data={{
+        period:        reportType === 'term' ? `${reportTerm} ${reportYear}` : `Full Year ${reportYear}`,
+        activeChildren: activeChildren.length,
+        collectionPct: (reportType === 'term' ? termFeeStats.pct : annualCollPct).toFixed(1),
+        collected:     (reportType === 'term' ? termFeeStats.paid : annualTotals.paid).toFixed(2),
+        due:           (reportType === 'term' ? termFeeStats.due  : annualTotals.due).toFixed(2),
+        outstanding:   Math.max(0, reportType === 'term'
+          ? termFeeStats.due  - termFeeStats.paid
+          : annualTotals.due  - annualTotals.paid).toFixed(2),
+        countPaid:    termFeeStats.countPaid,
+        countUnpaid:  termFeeStats.countUnpaid,
+        countPartial: termFeeStats.countPartial,
+        countWaived:  termFeeStats.countWaived,
+        pendingReg:   regStats.pending,
+        activeStaff:  staffStats.active,
+      }} />
+
+      <div className="hidden print:block text-center text-xs text-gray-400 pt-4 border-t border-gray-200">
+        Bosele Day Care Pre-school · Report generated {new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'long', year:'numeric' })}
+      </div>
 
       <div className="hidden print:block text-center text-xs text-gray-400 pt-4 border-t border-gray-200">
         Bosele Day Care Pre-school · Report generated {new Date().toLocaleDateString('en-GB', { day:'2-digit', month:'long', year:'numeric' })}
