@@ -7,6 +7,7 @@ import ElderlySchoolersManagement from './ElderlySchoolersManagement'
 import ElderlyPeopleManagement from './elderly-people/ElderlyPeopleManagement'
 import SanPeopleManagement from './san-people/SanPeopleManagement'
 import VdcManagement from './Vdc tools/VdcManagement'   // ← NEW IMPORT
+import CasualLabourManagement from './CasualLabourManagement'
 
 export default function StaffDashboard({ user }) {
 
@@ -57,6 +58,7 @@ export default function StaffDashboard({ user }) {
     { id: 'users',             label: 'Users' },
     { id: 'content',           label: 'Content' },
     { id: 'settings',          label: 'Settings' },
+    { id: 'casual-labour', label: 'Casual Labour' },
   ]
 
   return (
@@ -163,6 +165,7 @@ export default function StaffDashboard({ user }) {
 
         {/* Elderly People */}
         {activeTab === 'elderly-people' && <ElderlyPeopleManagement />}
+        {activeTab === 'casual-labour' && <CasualLabourManagement />}
 
         {/* San / Basarwa People */}
         {activeTab === 'san-people' && <SanPeopleManagement />}
